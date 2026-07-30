@@ -531,44 +531,45 @@ function Header({
   return (
     <header className="sticky top-0 z-30 border-b border-zinc-800/50 glass">
       <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-3 sm:gap-4">
-          {/* Logo + tagline */}
-          <div className="flex items-center gap-2.5 shrink-0">
-            <div className="grid h-9 w-9 place-items-center rounded-xl border border-zinc-800 bg-zinc-900">
-              <LogoIcon className="h-5 w-5" />
-            </div>
-            <div className="hidden sm:block">
-              <h1 className="text-base font-semibold leading-none tracking-tight text-zinc-100">
-                GitDeck
-              </h1>
-              <p className="text-[10px] text-zinc-500 mt-0.5">Repository Intelligence</p>
+        <div className="flex items-center justify-between w-full">
+          {/* Left Column — Logo + tagline */}
+          <div className="flex-1 flex justify-start">
+            <div className="flex items-center gap-2.5">
+              <div className="grid h-9 w-9 place-items-center rounded-xl border border-zinc-800 bg-zinc-900">
+                <LogoIcon className="h-5 w-5" />
+              </div>
+              <div className="hidden sm:block">
+                <h1 className="text-base font-semibold leading-none tracking-tight text-zinc-100">
+                  GitDeck
+                </h1>
+                <p className="text-[10px] text-zinc-500 mt-0.5">Repository Intelligence</p>
+              </div>
             </div>
           </div>
 
-          {/* Search — only after hero is dismissed */}
-          {showSearch && (
-            <form onSubmit={onSubmit} className="flex-1 min-w-0 max-w-lg">
-              <div className="group relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500 group-focus-within:text-zinc-300 transition-colors" />
-                <input
-                  ref={searchInputRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Search public repo (e.g. facebook/react)..."
-                  className="h-9 w-full rounded-xl border border-zinc-800 bg-zinc-900/60 pl-10 pr-20 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none transition focus:border-zinc-600 focus:ring-2 focus:ring-indigo-500/20"
-                />
-                <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 hidden items-center gap-0.5 rounded-md border border-zinc-700 bg-zinc-800/80 px-1.5 py-0.5 text-[10px] font-medium text-zinc-400 sm:flex">
-                  {shortcutLabel}
-                </kbd>
-              </div>
-            </form>
-          )}
+          {/* Center Column — Search bar */}
+          <div className="flex-[2] flex justify-center w-full">
+            {showSearch && (
+              <form onSubmit={onSubmit} className="w-full max-w-xl">
+                <div className="group relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500 group-focus-within:text-zinc-300 transition-colors" />
+                  <input
+                    ref={searchInputRef}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="Search public repo (e.g. facebook/react)..."
+                    className="h-9 w-full rounded-xl border border-zinc-800 bg-zinc-900/60 pl-10 pr-20 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none transition focus:border-zinc-600 focus:ring-2 focus:ring-indigo-500/20"
+                  />
+                  <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 hidden items-center gap-0.5 rounded-md border border-zinc-700 bg-zinc-800/80 px-1.5 py-0.5 text-[10px] font-medium text-zinc-400 sm:flex">
+                    {shortcutLabel}
+                  </kbd>
+                </div>
+              </form>
+            )}
+          </div>
 
-          {/* Spacer when no search */}
-          {!showSearch && <div className="flex-1" />}
-
-          {/* Right-side controls — all normalized to h-9 */}
-          <div className="flex items-center gap-2 shrink-0">
+          {/* Right Column — Controls */}
+          <div className="flex-1 flex justify-end items-center gap-4">
             {/* Rate limit pill */}
             {rateLimit && (
               <div className="hidden lg:flex h-9 items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-2.5 text-[11px] text-zinc-500">
@@ -1868,18 +1869,18 @@ function Footer() {
         </p>
         <div className="flex items-center gap-3">
           <a
-            href="https://github.com"
+            href="https://github.com/mirepatel"
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             className="text-zinc-600 transition hover:text-zinc-300"
             aria-label="GitHub Profile"
           >
-            <Github className="h-4 w-4" />
+            <GithubFilledIcon className="h-4 w-4" />
           </a>
           <a
-            href="https://linkedin.com"
+            href="https://www.linkedin.com/in/mirepatel"
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             className="text-zinc-600 transition hover:text-zinc-300"
             aria-label="LinkedIn Profile"
           >
@@ -1888,6 +1889,14 @@ function Footer() {
         </div>
       </div>
     </footer>
+  );
+}
+
+function GithubFilledIcon({ className = 'h-4 w-4' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+      <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
+    </svg>
   );
 }
 
