@@ -21,22 +21,32 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* Premium dark scrollbar */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: #09090b;
 }
 ::-webkit-scrollbar-thumb {
   background: #27272a;
-  border-radius: 6px;
-  border: 2px solid transparent;
+  border-radius: 8px;
+  border: 2px solid #09090b;
   background-clip: padding-box;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #3f3f46;
   background-clip: padding-box;
+}
+::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* Firefox scrollbar support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #27272a #09090b;
 }
 
 @keyframes shimmer {

@@ -268,6 +268,7 @@ export default function App() {
         onOpenSettings={() => setSettingsOpen(true)}
         hasToken={hasToken}
         searchInputRef={searchInputRef}
+        onLogoClick={() => { setActiveRepo(null); setInput(''); }}
       />
 
       <main className="mx-auto max-w-7xl px-4 pb-24 sm:px-6 lg:px-8">
@@ -506,7 +507,7 @@ function HeroSection({
 function Header({
   input, setInput, onSubmit, showSearch, rateLimit,
   user, authLoading, onOpenAuth, onOpenProfile, onOpenProfileAudits, onSignOut, onOpenSettings, hasToken,
-  searchInputRef,
+  searchInputRef, onLogoClick,
 }: {
   input: string;
   setInput: (v: string) => void;
@@ -522,6 +523,7 @@ function Header({
   onOpenSettings: () => void;
   hasToken: boolean;
   searchInputRef: React.RefObject<HTMLInputElement>;
+  onLogoClick: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const initial = user?.email?.[0]?.toUpperCase() ?? '?';
@@ -532,19 +534,22 @@ function Header({
     <header className="sticky top-0 z-30 border-b border-zinc-800/50 glass">
       <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between w-full">
-          {/* Left Column — Logo + tagline */}
+          {/* Left Column — Logo + tagline (clickable → home) */}
           <div className="flex-1 flex justify-start">
-            <div className="flex items-center gap-2.5">
+            <button
+              onClick={onLogoClick}
+              className="flex items-center gap-2.5 hover:opacity-80 transition-opacity cursor-pointer"
+            >
               <div className="grid h-9 w-9 place-items-center rounded-xl border border-zinc-800 bg-zinc-900">
                 <LogoIcon className="h-5 w-5" />
               </div>
-              <div className="hidden sm:block">
+              <div className="hidden sm:block text-left">
                 <h1 className="text-base font-semibold leading-none tracking-tight text-zinc-100">
                   GitDeck
                 </h1>
                 <p className="text-[10px] text-zinc-500 mt-0.5">Repository Intelligence</p>
               </div>
-            </div>
+            </button>
           </div>
 
           {/* Center Column — Search bar */}
@@ -835,7 +840,7 @@ function VitalsBanner({
 
       <div className="grid grid-cols-2 gap-px border-t border-zinc-800 bg-zinc-800/50 sm:grid-cols-3 lg:grid-cols-6">
         {vitals.map((v) => (
-          <div key={v.label} className="bg-zinc-900/50 p-4">
+          <div key={v.label} className="bg-zinc-900/50 p-4 hover:bg-white/[0.02] transition-colors border border-transparent hover:border-white/5">
             <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-zinc-500">
               <v.icon className="h-3.5 w-3.5 text-zinc-400" />
               {v.label}
@@ -1077,7 +1082,7 @@ function Stat({
   icon: React.ComponentType<{ className?: string }>;
 }) {
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
+    <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 hover:bg-white/[0.02] transition-colors hover:border-white/5">
       <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-zinc-500">
         <Icon className="h-3.5 w-3.5 text-zinc-400" />
         {label}
@@ -1626,14 +1631,14 @@ function ProfileModal({
           </AnimatePresence>
         </div>
 
-        {/* Sign Out button — subtle danger state */}
+        {/* Sign Out button — premium filled danger state */}
         <button
           onClick={async () => {
             await signOut();
             onClose();
             showToast('Signed out');
           }}
-          className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-medium text-red-400 transition hover:text-red-300 hover:bg-red-500/10"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2 mt-4 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-600 hover:text-white transition-all font-medium"
         >
           <LogOut className="h-4 w-4" />
           Sign Out
