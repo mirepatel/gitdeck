@@ -575,10 +575,10 @@ function Header({
           </div>
 
           {/* Right Column — Controls */}
-          <div className="flex-1 flex justify-end items-center gap-4 order-2 sm:order-3">
+          <div className="flex-1 flex justify-end items-center gap-2 sm:gap-4 order-2 sm:order-3">
             {/* Rate limit pill */}
             {rateLimit && (
-              <div className="hidden lg:flex h-9 items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-2.5 text-[11px] text-zinc-500">
+              <div className="flex h-9 items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-2.5 text-[11px] text-zinc-500">
                 <Gauge className="h-3.5 w-3.5" />
                 {rateLimit.remaining}/{rateLimit.limit}
               </div>
@@ -775,49 +775,53 @@ function VitalsBanner({
             className="h-14 w-14 rounded-xl border border-zinc-800 shrink-0"
           />
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <a
-                href={repo.html_url}
-                target="_blank"
-                rel="noreferrer"
-                className="text-lg font-semibold tracking-tight text-zinc-100 hover:text-white transition truncate"
-              >
-                {repo.full_name}
-              </a>
-              <span className="rounded-full border border-zinc-800 bg-zinc-900 px-2 py-0.5 text-[10px] text-zinc-400">
-                {repo.default_branch}
-              </span>
-              <span className={`flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${scoreBg}`}>
-                <span className={`h-1.5 w-1.5 rounded-full ${dotColor} animate-pulse`} />
-                <span className="text-zinc-300">Health Score:</span>
-                <span className={`font-semibold ${scoreColor}`}>{hs.score}/100</span>
-                <span className="text-zinc-500">— {hs.activity}</span>
-              </span>
-              <button
-                onClick={onBookmark}
-                disabled={bookmarking}
-                title="Bookmark this repo"
-                className={`flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition disabled:opacity-50 ${
-                  isBookmarked
-                    ? 'border-amber-500/40 bg-amber-500/10 text-amber-300'
-                    : 'border-zinc-800 bg-zinc-900 text-zinc-300 hover:border-zinc-700 hover:bg-zinc-800'
-                }`}
-              >
-                {bookmarking ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                ) : (
-                  <Star className={`h-3 w-3 ${isBookmarked ? 'fill-amber-400 text-amber-400' : ''}`} />
-                )}
-                {isBookmarked ? 'Bookmarked' : 'Bookmark'}
-              </button>
-              <button
-                onClick={onExport}
-                disabled={!canExport}
-                className="flex items-center gap-1 rounded-full border border-zinc-700 bg-zinc-100 px-2.5 py-0.5 text-[11px] font-medium text-black transition hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <Download className="h-3 w-3" />
-                Export Audit
-              </button>
+            <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
+              <div className="flex items-center gap-2 flex-wrap">
+                <a
+                  href={repo.html_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-lg font-semibold tracking-tight text-zinc-100 hover:text-white transition truncate"
+                >
+                  {repo.full_name}
+                </a>
+                <span className="rounded-full border border-zinc-800 bg-zinc-900 px-2 py-0.5 text-[10px] text-zinc-400">
+                  {repo.default_branch}
+                </span>
+                <span className={`flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${scoreBg}`}>
+                  <span className={`h-1.5 w-1.5 rounded-full ${dotColor} animate-pulse`} />
+                  <span className="text-zinc-300">Health Score:</span>
+                  <span className={`font-semibold ${scoreColor}`}>{hs.score}/100</span>
+                  <span className="text-zinc-500">— {hs.activity}</span>
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={onBookmark}
+                  disabled={bookmarking}
+                  title="Bookmark this repo"
+                  className={`flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition disabled:opacity-50 ${
+                    isBookmarked
+                      ? 'border-amber-500/40 bg-amber-500/10 text-amber-300'
+                      : 'border-zinc-800 bg-zinc-900 text-zinc-300 hover:border-zinc-700 hover:bg-zinc-800'
+                  }`}
+                >
+                  {bookmarking ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Star className={`h-3 w-3 ${isBookmarked ? 'fill-amber-400 text-amber-400' : ''}`} />
+                  )}
+                  {isBookmarked ? 'Bookmarked' : 'Bookmark'}
+                </button>
+                <button
+                  onClick={onExport}
+                  disabled={!canExport}
+                  className="flex items-center gap-1 rounded-full border border-zinc-700 bg-zinc-100 px-2.5 py-0.5 text-[11px] font-medium text-black transition hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <Download className="h-3 w-3" />
+                  Export Audit
+                </button>
+              </div>
             </div>
             {repo.description && (
               <p className="mt-1 text-sm text-zinc-400 line-clamp-2 max-w-2xl">
@@ -839,14 +843,14 @@ function VitalsBanner({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 w-full border-t border-zinc-800 pt-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 w-full pt-4 border-t border-zinc-800/50 mt-6">
         {vitals.map((v) => (
-          <div key={v.label} className="bg-zinc-900/30 border border-white/5 rounded-xl p-4 flex flex-col justify-center hover:bg-white/[0.02] transition-colors">
-            <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-zinc-500">
+          <div key={v.label} className="flex flex-col justify-center">
+            <div className="flex items-center gap-1.5 text-zinc-400 text-sm font-medium">
               <v.icon className="h-3.5 w-3.5 text-zinc-400" />
               {v.label}
             </div>
-            <div className="mt-1.5 tracking-tight font-semibold text-2xl text-zinc-100 truncate">
+            <div className="mt-1.5 text-3xl font-semibold text-white tracking-tight truncate">
               {v.value}
             </div>
           </div>
@@ -1083,12 +1087,12 @@ function Stat({
   icon: React.ComponentType<{ className?: string }>;
 }) {
   return (
-    <div className="bg-zinc-900/30 border border-white/5 rounded-xl p-4 flex flex-col justify-center hover:bg-white/[0.02] transition-colors">
-      <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-zinc-500">
+    <div className="flex flex-col justify-center">
+      <div className="flex items-center gap-1.5 text-zinc-400 text-sm font-medium">
         <Icon className="h-3.5 w-3.5 text-zinc-400" />
         {label}
       </div>
-      <div className="mt-1.5 tracking-tight font-semibold text-2xl text-zinc-100 truncate">{value}</div>
+      <div className="mt-1.5 text-3xl font-semibold text-white tracking-tight truncate">{value}</div>
     </div>
   );
 }
@@ -1759,9 +1763,9 @@ function LoadingState() {
             <SkeletonBox className="h-3 w-72 !rounded-lg" />
           </div>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 w-full border-t border-zinc-800/50 pt-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 w-full pt-4 border-t border-zinc-800/50 mt-6">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="bg-zinc-900/30 border border-white/5 rounded-xl p-4 flex flex-col justify-center">
+            <div key={i} className="flex flex-col justify-center">
               <SkeletonBox className="h-3 w-16 !rounded-lg" />
               <SkeletonBox className="mt-2 h-7 w-20 !rounded-lg" />
             </div>
