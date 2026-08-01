@@ -78,6 +78,14 @@ body {
   50% { opacity: 0.55; }
 }
 
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 .glass {
   background: rgba(9, 9, 11, 0.72);
   backdrop-filter: blur(16px) saturate(180%);

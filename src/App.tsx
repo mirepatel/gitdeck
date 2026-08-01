@@ -326,7 +326,7 @@ export default function App() {
                       canExport={!!data.repo && !loading}
                     />
                     <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
-                    <div className="mt-6 overflow-x-auto">
+                    <div className="mt-6 min-w-0">
                       <AnimatePresence mode="wait">
                         <motion.div
                           key={activeTab}
@@ -334,7 +334,7 @@ export default function App() {
                           animate={{ opacity: 1, x: 0 }}
                           exit={{ opacity: 0, x: -16 }}
                           transition={{ duration: 0.25 }}
-                          className="min-w-[300px]"
+                          className="w-full min-w-0"
                         >
                           {activeTab === 'velocity' && <VelocityTab data={data} />}
                           {activeTab === 'issues' && <IssuesTab data={data} />}
@@ -839,9 +839,9 @@ function VitalsBanner({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-6 border-t border-zinc-800 pt-3 sm:pt-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 w-full border-t border-zinc-800 pt-4">
         {vitals.map((v) => (
-          <div key={v.label} className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 hover:bg-white/[0.02] transition-colors hover:border-white/5">
+          <div key={v.label} className="bg-zinc-900/30 border border-white/5 rounded-xl p-4 flex flex-col justify-center hover:bg-white/[0.02] transition-colors">
             <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-zinc-500">
               <v.icon className="h-3.5 w-3.5 text-zinc-400" />
               {v.label}
@@ -864,7 +864,7 @@ function TabBar({
   setActiveTab: (t: TabId) => void;
 }) {
   return (
-    <div className="mt-6 flex gap-1 overflow-x-auto border-b border-zinc-800 pb-px">
+    <div className="mt-6 flex flex-row gap-1 overflow-x-auto whitespace-nowrap w-full no-scrollbar border-b border-zinc-800 pb-px">
       {TABS.map((t) => {
         const active = t.id === activeTab;
         return (
@@ -900,7 +900,7 @@ function Card({
   className?: string;
 }) {
   return (
-    <div className={`rounded-2xl border border-zinc-800 bg-zinc-900/50 backdrop-blur-sm p-5 ${className}`}>
+    <div className={`rounded-2xl border border-zinc-800 bg-zinc-900/50 backdrop-blur-sm p-5 overflow-hidden min-w-0 ${className}`}>
       {title && (
         <div className="mb-4 flex items-center gap-2">
           {Icon && <Icon className="h-4 w-4 text-zinc-300" />}
@@ -931,7 +931,7 @@ function VelocityTab({ data }: { data: FetchResult }) {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <Card title="Commit Timeline" icon={TrendingUp} className="lg:col-span-2">
-        <div className="h-72">
+        <div className="h-72 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={timeline} margin={{ top: 8, right: 12, left: -16, bottom: 0 }}>
               <defs>
@@ -955,7 +955,7 @@ function VelocityTab({ data }: { data: FetchResult }) {
       </Card>
 
       <Card title="Top Authors" icon={Users}>
-        <div className="h-64">
+        <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={authorChartData} layout="vertical" margin={{ left: 20, right: 12 }}>
               <defs>
@@ -1032,7 +1032,7 @@ function IssuesTab({ data }: { data: FetchResult }) {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <Card title="Issue Distribution" icon={AlertCircle}>
-        <div className="h-56">
+        <div className="h-56 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie data={issuePie} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={3}>
@@ -1048,7 +1048,7 @@ function IssuesTab({ data }: { data: FetchResult }) {
       </Card>
 
       <Card title="Pull Request Breakdown" icon={GitFork}>
-        <div className="h-56">
+        <div className="h-56 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie data={prPie} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={3}>
@@ -1083,12 +1083,12 @@ function Stat({
   icon: React.ComponentType<{ className?: string }>;
 }) {
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 hover:bg-white/[0.02] transition-colors hover:border-white/5">
+    <div className="bg-zinc-900/30 border border-white/5 rounded-xl p-4 flex flex-col justify-center hover:bg-white/[0.02] transition-colors">
       <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-zinc-500">
         <Icon className="h-3.5 w-3.5 text-zinc-400" />
         {label}
       </div>
-      <div className="mt-1.5 tracking-tight font-semibold text-2xl text-zinc-100">{value}</div>
+      <div className="mt-1.5 tracking-tight font-semibold text-2xl text-zinc-100 truncate">{value}</div>
     </div>
   );
 }
@@ -1229,7 +1229,7 @@ function LanguagesTab({ data }: { data: FetchResult }) {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <Card title="Language Distribution" icon={Code2}>
-        <div className="h-72">
+        <div className="h-72 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie data={pieData} dataKey="value" nameKey="name" innerRadius={60} outerRadius={110} paddingAngle={2}>
@@ -1759,9 +1759,9 @@ function LoadingState() {
             <SkeletonBox className="h-3 w-72 !rounded-lg" />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-6 border-t border-zinc-800/50 pt-3 sm:pt-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 w-full border-t border-zinc-800/50 pt-4">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="rounded-xl border border-zinc-800/50 bg-zinc-900/30 p-4">
+            <div key={i} className="bg-zinc-900/30 border border-white/5 rounded-xl p-4 flex flex-col justify-center">
               <SkeletonBox className="h-3 w-16 !rounded-lg" />
               <SkeletonBox className="mt-2 h-7 w-20 !rounded-lg" />
             </div>
