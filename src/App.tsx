@@ -63,7 +63,7 @@ function LogoIcon({ className = 'h-5 w-5' }: { className?: string }) {
 }
 
 export default function App() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
   const [input, setInput] = useState('');
   const [activeRepo, setActiveRepo] = useState<string | null>(null);
   const [data, setData] = useState<Awaited<ReturnType<typeof fetchRepoData>> | null>(null);
@@ -262,7 +262,7 @@ export default function App() {
         onOpenProfile={() => { setProfileInitialTab('bookmarks'); setProfileOpen(true); }}
         onOpenProfileAudits={() => { setProfileInitialTab('audits'); setProfileOpen(true); }}
         onSignOut={async () => {
-          await supabase.auth.signOut();
+          try { await signOut(); } catch { /* session clears locally regardless */ }
           showToast('Signed out');
         }}
         onOpenSettings={() => setSettingsOpen(true)}
@@ -326,7 +326,7 @@ export default function App() {
                       canExport={!!data.repo && !loading}
                     />
                     <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
-                    <div className="mt-6">
+                    <div className="mt-6 overflow-x-auto">
                       <AnimatePresence mode="wait">
                         <motion.div
                           key={activeTab}
@@ -334,6 +334,7 @@ export default function App() {
                           animate={{ opacity: 1, x: 0 }}
                           exit={{ opacity: 0, x: -16 }}
                           transition={{ duration: 0.25 }}
+                          className="min-w-[300px]"
                         >
                           {activeTab === 'velocity' && <VelocityTab data={data} />}
                           {activeTab === 'issues' && <IssuesTab data={data} />}
@@ -533,7 +534,7 @@ function Header({
   return (
     <header className="sticky top-0 z-30 border-b border-zinc-800/50 glass">
       <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between w-full">
+        <div className="flex items-center justify-between w-full flex-wrap gap-y-3">
           {/* Left Column — Logo + tagline (clickable → home) */}
           <div className="flex-1 flex justify-start">
             <button
@@ -553,7 +554,7 @@ function Header({
           </div>
 
           {/* Center Column — Search bar */}
-          <div className="flex-[2] flex justify-center w-full">
+          <div className="order-3 sm:order-2 w-full sm:w-auto sm:flex-[2] flex justify-center">
             {showSearch && (
               <form onSubmit={onSubmit} className="w-full max-w-xl">
                 <div className="group relative">
@@ -574,7 +575,7 @@ function Header({
           </div>
 
           {/* Right Column — Controls */}
-          <div className="flex-1 flex justify-end items-center gap-4">
+          <div className="flex-1 flex justify-end items-center gap-4 order-2 sm:order-3">
             {/* Rate limit pill */}
             {rateLimit && (
               <div className="hidden lg:flex h-9 items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-2.5 text-[11px] text-zinc-500">
@@ -838,9 +839,9 @@ function VitalsBanner({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-px border-t border-zinc-800 bg-zinc-800/50 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-6 border-t border-zinc-800 pt-3 sm:pt-4">
         {vitals.map((v) => (
-          <div key={v.label} className="bg-zinc-900/50 p-4 hover:bg-white/[0.02] transition-colors border border-transparent hover:border-white/5">
+          <div key={v.label} className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 hover:bg-white/[0.02] transition-colors hover:border-white/5">
             <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-zinc-500">
               <v.icon className="h-3.5 w-3.5 text-zinc-400" />
               {v.label}
@@ -1327,7 +1328,7 @@ function AuthModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-2 sm:p-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <motion.div
@@ -1335,7 +1336,7 @@ function AuthModal({
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-sm rounded-2xl border border-zinc-800 bg-zinc-900 shadow-2xl"
+        className="relative w-[95vw] sm:w-full sm:max-w-sm max-h-[85vh] overflow-y-auto rounded-2xl border border-zinc-800 bg-zinc-900 shadow-2xl"
       >
         <div className="flex items-center justify-between border-b border-zinc-800 p-4">
           <div className="flex items-center gap-2">
@@ -1415,12 +1416,11 @@ function ProfileModal({
   showToast: (msg: string) => void;
   initialTab?: 'bookmarks' | 'audits';
 }) {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [reports, setReports] = useState<ArchivedReport[]>([]);
   const [loadingReports, setLoadingReports] = useState(true);
   const [bookmarkItems, setBookmarkItems] = useState<string[]>([]);
   const [segment, setSegment] = useState<'bookmarks' | 'audits'>(initialTab);
-  const { signOut } = useAuth();
 
   const refreshAll = useCallback(async () => {
     const [r, b] = await Promise.all([
@@ -1482,7 +1482,7 @@ function ProfileModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-2 sm:p-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <motion.div
@@ -1490,7 +1490,7 @@ function ProfileModal({
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-md rounded-2xl border border-white/10 bg-zinc-950/90 backdrop-blur-2xl shadow-2xl p-5"
+        className="relative w-[95vw] sm:w-full sm:max-w-md max-h-[85vh] overflow-y-auto rounded-2xl border border-white/10 bg-zinc-950/90 backdrop-blur-2xl shadow-2xl p-5"
       >
         {/* Header: avatar + email */}
         <div className="flex items-start justify-between">
@@ -1634,7 +1634,7 @@ function ProfileModal({
         {/* Sign Out button — premium filled danger state */}
         <button
           onClick={async () => {
-            await signOut();
+            try { await signOut(); } catch { /* session clears locally regardless */ }
             onClose();
             showToast('Signed out');
           }}
@@ -1681,7 +1681,7 @@ function SettingsModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-2 sm:p-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <motion.div
@@ -1689,7 +1689,7 @@ function SettingsModal({
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 shadow-2xl"
+        className="relative w-[95vw] sm:w-full sm:max-w-md max-h-[85vh] overflow-y-auto rounded-2xl border border-zinc-800 bg-zinc-900 shadow-2xl"
       >
         <div className="flex items-center justify-between border-b border-zinc-800 p-4">
           <div className="flex items-center gap-2">
@@ -1759,9 +1759,9 @@ function LoadingState() {
             <SkeletonBox className="h-3 w-72 !rounded-lg" />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-px border-t border-zinc-800/50 bg-zinc-800/30 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-6 border-t border-zinc-800/50 pt-3 sm:pt-4">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="bg-zinc-900/30 p-4">
+            <div key={i} className="rounded-xl border border-zinc-800/50 bg-zinc-900/30 p-4">
               <SkeletonBox className="h-3 w-16 !rounded-lg" />
               <SkeletonBox className="mt-2 h-7 w-20 !rounded-lg" />
             </div>
@@ -2107,7 +2107,7 @@ function ReportModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-2 sm:p-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <motion.div
@@ -2115,7 +2115,7 @@ function ReportModal({
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-2xl rounded-2xl border border-zinc-800 bg-zinc-900 shadow-2xl"
+        className="relative w-[95vw] sm:w-full sm:max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl border border-zinc-800 bg-zinc-900 shadow-2xl"
       >
         <div className="flex items-center justify-between border-b border-zinc-800 p-4">
           <div className="flex items-center gap-2">
