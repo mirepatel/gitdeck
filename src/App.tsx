@@ -536,7 +536,7 @@ function Header({
       <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between w-full flex-wrap gap-y-3">
           {/* Left Column — Logo + tagline (clickable → home) */}
-          <div className="flex-1 flex justify-start">
+          <div className="flex items-center">
             <button
               onClick={onLogoClick}
               className="flex items-center gap-2.5 hover:opacity-80 transition-opacity cursor-pointer"
@@ -843,9 +843,9 @@ function VitalsBanner({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 w-full pt-4 border-t border-zinc-800/50 mt-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 w-full px-5 sm:px-6 pb-5 sm:pb-6 pt-4 border-t border-zinc-800/50 mt-6">
         {vitals.map((v) => (
-          <div key={v.label} className="flex flex-col justify-center">
+          <div key={v.label} className="flex flex-col justify-center rounded-lg border border-transparent hover:border-white/5 hover:bg-white/[0.02] transition-colors px-2 py-1.5">
             <div className="flex items-center gap-1.5 text-zinc-400 text-sm font-medium">
               <v.icon className="h-3.5 w-3.5 text-zinc-400" />
               {v.label}
@@ -1087,7 +1087,7 @@ function Stat({
   icon: React.ComponentType<{ className?: string }>;
 }) {
   return (
-    <div className="flex flex-col justify-center">
+    <div className="flex flex-col justify-center rounded-lg border border-transparent hover:border-white/5 hover:bg-white/[0.02] transition-colors px-2 py-1.5">
       <div className="flex items-center gap-1.5 text-zinc-400 text-sm font-medium">
         <Icon className="h-3.5 w-3.5 text-zinc-400" />
         {label}
@@ -1756,16 +1756,16 @@ function LoadingState() {
     >
       {/* Vitals banner skeleton */}
       <div className="overflow-hidden rounded-2xl border border-zinc-800/50">
-        <div className="flex items-center gap-4 p-6">
+        <div className="flex items-center gap-4 p-5 sm:p-6">
           <SkeletonBox className="h-14 w-14 !rounded-xl" />
           <div className="flex-1 space-y-2">
             <SkeletonBox className="h-5 w-48 !rounded-lg" />
             <SkeletonBox className="h-3 w-72 !rounded-lg" />
           </div>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 w-full pt-4 border-t border-zinc-800/50 mt-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 w-full px-5 sm:px-6 pb-5 sm:pb-6 pt-4 border-t border-zinc-800/50 mt-6">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="flex flex-col justify-center">
+            <div key={i} className="flex flex-col justify-center rounded-lg px-2 py-1.5">
               <SkeletonBox className="h-3 w-16 !rounded-lg" />
               <SkeletonBox className="mt-2 h-7 w-20 !rounded-lg" />
             </div>
@@ -1774,9 +1774,9 @@ function LoadingState() {
       </div>
 
       {/* Tab bar skeleton */}
-      <div className="flex gap-4 border-b border-zinc-800/50 pb-px">
+      <div className="flex gap-4 overflow-x-auto no-scrollbar border-b border-zinc-800/50 pb-px">
         {Array.from({ length: 4 }).map((_, i) => (
-          <SkeletonBox key={i} className="h-9 w-32 !rounded-lg" />
+          <SkeletonBox key={i} className="h-9 w-32 shrink-0 !rounded-lg" />
         ))}
       </div>
 
