@@ -249,9 +249,9 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/20 via-zinc-950 to-zinc-950 text-zinc-200">
+    <div className="min-h-screen bg-zinc-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/20 via-zinc-950 to-zinc-950 text-zinc-200">
       {/* Ambient radial glow background */}
-      <div className="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/20 via-zinc-950 to-zinc-950" />
+      <div className="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/20 via-zinc-950 to-zinc-950" />
       {/* Faint dark CSS grid pattern overlay */}
       <div className="fixed inset-0 -z-10 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px]" />
 
@@ -285,6 +285,7 @@ export default function App() {
               setInput={setInput}
               onSubmit={onSubmit}
               onSelectPreset={(r) => setActiveRepo(r)}
+              searchInputRef={searchInputRef}
             />
           )}
 
@@ -368,6 +369,9 @@ export default function App() {
             onClose={() => setReportOpen(false)}
             onSaveToStorage={saveToStorage}
             canSaveToStorage={!!user}
+            repoFullName={reportData?.repo?.full_name ?? ''}
+            healthScoreValue={reportData ? healthScore(reportData.commits, reportData.issues).score : 0}
+            showToast={showToast}
           />
         )}
       </AnimatePresence>
@@ -415,12 +419,13 @@ export default function App() {
 
 /* ---------- Hero Section ---------- */
 function HeroSection({
-  input, setInput, onSubmit, onSelectPreset,
+  input, setInput, onSubmit, onSelectPreset, searchInputRef,
 }: {
   input: string;
   setInput: (v: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   onSelectPreset: (r: string) => void;
+  searchInputRef: React.RefObject<HTMLInputElement>;
 }) {
   return (
     <motion.div
@@ -475,6 +480,7 @@ function HeroSection({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Search public repo (e.g. facebook/react)..."
+            ref={searchInputRef}
             autoFocus
             className="w-full rounded-2xl border border-zinc-800 bg-zinc-900/60 py-4 pl-12 pr-32 text-base text-zinc-100 placeholder:text-zinc-600 outline-none transition focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10"
           />
@@ -1178,14 +1184,14 @@ function CommunityStandardsCard({ community }: { community: CommunityProfile | n
                   key={item.label}
                   className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition ${
                     present
-                      ? 'border-emerald-500/20 bg-emerald-500/5 text-zinc-200'
-                      : 'border-zinc-800 bg-zinc-900/40 text-zinc-500'
+                      ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+                      : 'border-zinc-800/50 bg-zinc-900/20 text-zinc-600 opacity-50'
                   }`}
                 >
                   {present ? (
-                    <Check className="h-4 w-4 shrink-0 text-emerald-400" />
+                    <Check className="h-4 w-4 shrink-0 text-emerald-400" strokeWidth={3} />
                   ) : (
-                    <X className="h-4 w-4 shrink-0 text-zinc-600" />
+                    <X className="h-4 w-4 shrink-0 text-zinc-700" />
                   )}
                   <span className="truncate font-medium">{item.label}</span>
                 </div>
@@ -1937,7 +1943,7 @@ function LoadingState() {
             <SkeletonBox className="h-3 w-72 !rounded-lg" />
           </div>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 w-full px-5 sm:px-6 pb-5 sm:pb-6 pt-4 border-t border-zinc-800/50 mt-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 w-full px-5 sm:px-6 pb-5 sm:pb-6 pt-4 border-t border-zinc-800/50">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="flex flex-col justify-center rounded-lg px-2 py-1.5">
               <SkeletonBox className="h-3 w-16 !rounded-lg" />
@@ -2269,6 +2275,7 @@ function Toast({ message }: { message: string | null }) {
 /* ---------- Report Modal ---------- */
 function ReportModal({
   text, copied, onCopy, onDownload, onClose, onSaveToStorage, canSaveToStorage,
+  repoFullName, healthScoreValue, showToast,
 }: {
   text: string;
   copied: boolean;
@@ -2277,8 +2284,29 @@ function ReportModal({
   onClose: () => void;
   onSaveToStorage: () => void;
   canSaveToStorage: boolean;
+  repoFullName: string;
+  healthScoreValue: number;
+  showToast: (msg: string) => void;
 }) {
   const [exportOpen, setExportOpen] = useState(false);
+  const [badgeOpen, setBadgeOpen] = useState(false);
+
+  const badgeColor =
+    healthScoreValue >= 80 ? 'brightgreen'
+      : healthScoreValue >= 60 ? 'green'
+      : healthScoreValue >= 40 ? 'yellow'
+      : 'red';
+  const badgeUrl = `https://img.shields.io/badge/GitDeck_Health-${healthScoreValue}%2F100-${badgeColor}`;
+  const badgeMarkdown = `[![GitDeck Health](${badgeUrl})](https://github.com/${repoFullName})`;
+
+  const copyBadge = async () => {
+    try {
+      await navigator.clipboard.writeText(badgeMarkdown);
+      showToast('Badge markdown copied!');
+    } catch {
+      showToast('Copy failed — select and copy manually.');
+    }
+  };
 
   return (
     <motion.div
@@ -2308,6 +2336,23 @@ function ReportModal({
           <pre className="whitespace-pre-wrap break-words rounded-xl border border-zinc-800 bg-black/40 p-4 text-[11px] leading-relaxed text-zinc-300 font-mono">
             {text}
           </pre>
+          {badgeOpen && (
+            <div className="mt-4 rounded-xl border border-zinc-800 bg-black/40 p-4">
+              <p className="mb-3 text-xs font-medium uppercase tracking-wide text-zinc-500">README Badge Preview</p>
+              <div className="mb-3 flex items-center gap-2">
+                <img src={badgeUrl} alt="GitDeck Health Badge" className="h-5" />
+              </div>
+              <pre className="whitespace-pre-wrap break-words rounded-lg border border-zinc-800 bg-zinc-950 p-3 text-[11px] leading-relaxed text-zinc-300 font-mono">
+                {badgeMarkdown}
+              </pre>
+              <button
+                onClick={copyBadge}
+                className="mt-3 flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-xs font-medium text-black transition hover:bg-zinc-200"
+              >
+                <CheckCircle2 className="h-3.5 w-3.5" /> Copy Badge Markdown
+              </button>
+            </div>
+          )}
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2 border-t border-zinc-800 p-4">
           {/* Export dropdown */}
@@ -2352,6 +2397,12 @@ function ReportModal({
               )}
             </AnimatePresence>
           </div>
+          <button
+            onClick={() => setBadgeOpen((v) => !v)}
+            className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition ${badgeOpen ? 'border-indigo-500/40 bg-indigo-500/10 text-indigo-300' : 'border-zinc-800 bg-zinc-900 text-zinc-200 hover:bg-zinc-800'}`}
+          >
+            <Code2 className="h-3.5 w-3.5" /> Get README Badge
+          </button>
           <button
             onClick={onSaveToStorage}
             disabled={!canSaveToStorage}
