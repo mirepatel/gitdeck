@@ -63,12 +63,19 @@ export interface ContributorItem {
 
 export type Languages = Record<string, number>;
 
+export interface DependencyInfo {
+  dependencies: Record<string, string>;
+  devDependencies: Record<string, string>;
+  hasPackageJson: boolean;
+}
+
 export interface FetchResult {
   repo: RepoData | null;
   commits: CommitItem[];
   issues: IssueItem[];
   contributors: ContributorItem[];
   languages: Languages;
+  dependencies: DependencyInfo;
   error: string | null;
   rateLimit: { remaining: number; limit: number; reset: number } | null;
 }

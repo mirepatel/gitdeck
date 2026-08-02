@@ -51,7 +51,12 @@ export async function fetchRepoData(
   try {
     // Priority: localStorage PAT → env var fallback
     const localToken = getStoredToken();
-    const envToken = import.meta.env.VITE_GITHUB_TOKEN as string | undefined;
+    let envToken: string | undefined;
+    try {
+      envToken = import.meta.env.VITE_GITHUB_TOKEN as string | undefined;
+    } catch {
+      envToken = undefined;
+    }
     const token = localToken || envToken || null;
 
     const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/github-proxy`;
@@ -77,6 +82,7 @@ export async function fetchRepoData(
         issues: [],
         contributors: [],
         languages: {},
+        dependencies: { dependencies: {}, devDependencies: {}, hasPackageJson: false },
         error: body?.error ?? `Server error (${res.status}).`,
         rateLimit: body?.rateLimit ?? null,
       };
@@ -89,6 +95,7 @@ export async function fetchRepoData(
       issues: body.issues ?? [],
       contributors: body.contributors ?? [],
       languages: body.languages ?? {},
+      dependencies: body.dependencies ?? { dependencies: {}, devDependencies: {}, hasPackageJson: false },
       error: body.error ?? null,
       rateLimit: body.rateLimit ?? null,
     };
@@ -99,6 +106,7 @@ export async function fetchRepoData(
       issues: [],
       contributors: [],
       languages: {},
+      dependencies: { dependencies: {}, devDependencies: {}, hasPackageJson: false },
       error: e instanceof Error ? `Network error: ${e.message}` : 'Network error reaching server.',
       rateLimit: null,
     };

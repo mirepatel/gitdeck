@@ -115,12 +115,28 @@ Deno.serve(async (req: Request) => {
         );
       }
 
-      const [commits, issues, contributors, languages] = await Promise.all([
+      const [commits, issues, contributors, languages, pkg] = await Promise.all([
         ghFetch<unknown[]>(`/repos/${owner}/${repo}/commits?per_page=100`, token),
         ghFetch<unknown[]>(`/repos/${owner}/${repo}/issues?state=all&per_page=100`, token),
         ghFetch<unknown[]>(`/repos/${owner}/${repo}/contributors?per_page=100&anon=true`, token),
         ghFetch<Record<string, number>>(`/repos/${owner}/${repo}/languages`, token),
+        ghFetch<{ content?: string; encoding?: string }>(`/repos/${owner}/${repo}/contents/package.json`, token),
       ]);
+
+      let dependencies = { dependencies: {}, devDependencies: {}, hasPackageJson: false };
+      if (pkg.data?.content) {
+        try {
+          const decoded = atob(pkg.data.content.replace(/\n/g, ""));
+          const parsed = JSON.parse(decoded);
+          dependencies = {
+            dependencies: typeof parsed.dependencies === "object" && parsed.dependencies ? parsed.dependencies : {},
+            devDependencies: typeof parsed.devDependencies === "object" && parsed.devDependencies ? parsed.devDependencies : {},
+            hasPackageJson: true,
+          };
+        } catch {
+          /* malformed package.json — leave empty */
+        }
+      }
 
       return new Response(
         JSON.stringify({
@@ -129,6 +145,7 @@ Deno.serve(async (req: Request) => {
           issues: issues.data ?? [],
           contributors: contributors.data ?? [],
           languages: languages.data ?? {},
+          dependencies,
           rateLimit: base.rateLimit,
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }

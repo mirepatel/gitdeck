@@ -10,7 +10,7 @@ import {
   TrendingUp, AlertTriangle, ShieldAlert, CheckCircle2, Clock,
   ChevronRight, Sparkles, Gauge, Bookmark, LogOut, User as UserIcon,
   Archive, Loader2, Mail, Lock, ChevronDown, Settings, KeyRound, Trash2,
-  ArrowRight, Zap, FileJson, FileType, ChevronDown as ChevronDownIcon,
+  ArrowRight, Zap, FileJson, FileType, ChevronDown as ChevronDownIcon, Package,
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { fetchRepoData, parseRepoInput, getStoredToken, setStoredToken } from './github';
@@ -134,6 +134,7 @@ export default function App() {
     if (!parsed) {
       setData({
         repo: null, commits: [], issues: [], contributors: [], languages: {},
+        dependencies: { dependencies: {}, devDependencies: {}, hasPackageJson: false },
         error: 'Enter a valid repo like "owner/name" or a GitHub URL.', rateLimit: null,
       });
       return;
@@ -249,6 +250,8 @@ export default function App() {
     <div className="min-h-screen bg-zinc-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/15 via-zinc-950 to-zinc-950 text-zinc-200">
       {/* Ambient radial glow background */}
       <div className="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/15 via-zinc-950 to-zinc-950" />
+      {/* Faint dark CSS grid pattern overlay */}
+      <div className="fixed inset-0 -z-10 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
 
       <Header
         input={input}
@@ -385,6 +388,7 @@ export default function App() {
             onClose={() => setProfileOpen(false)}
             showToast={showToast}
             initialTab={profileInitialTab}
+            onBookmarkChanged={refreshBookmarks}
           />
         )}
       </AnimatePresence>
@@ -431,7 +435,7 @@ function HeroSection({
         className="mb-6 flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/50 px-3 py-1.5 text-xs text-zinc-400 backdrop-blur-sm"
       >
         <Zap className="h-3.5 w-3.5 text-indigo-400" />
-        Real-time GitHub analytics — no setup required
+        Instant GitHub analytics — no setup required
       </motion.div>
 
       <motion.h1
@@ -453,7 +457,7 @@ function HeroSection({
         transition={{ delay: 0.2, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         className="mt-4 max-w-xl text-center text-base text-zinc-400 sm:text-lg"
       >
-        Real-time codebase health, commit velocity, and contributor insights.
+        Actionable codebase health, commit velocity, and contributor insights.
       </motion.p>
 
       <motion.form
@@ -461,7 +465,7 @@ function HeroSection({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.28, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-        className="mt-8 w-full max-w-xl"
+        className="mt-8 w-full max-w-xl mx-auto"
       >
         <div className="group relative">
           <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-500 transition-colors group-focus-within:text-indigo-400" />
@@ -868,28 +872,24 @@ function TabBar({
   setActiveTab: (t: TabId) => void;
 }) {
   return (
-    <div className="mt-6 flex flex-row gap-1 overflow-x-auto whitespace-nowrap w-full no-scrollbar border-b border-zinc-800 pb-px">
-      {TABS.map((t) => {
-        const active = t.id === activeTab;
-        return (
-          <button
-            key={t.id}
-            onClick={() => setActiveTab(t.id)}
-            className={`relative flex items-center gap-2 whitespace-nowrap px-4 py-3 text-sm font-medium transition ${
-              active ? 'text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'
-            }`}
-          >
-            <t.icon className="h-4 w-4" />
-            {t.label}
-            {active && (
-              <motion.div
-                layoutId="tab-underline"
-                className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-zinc-100"
-              />
-            )}
-          </button>
-        );
-      })}
+    <div className="mt-6 flex w-full justify-start overflow-x-auto no-scrollbar">
+      <div className="inline-flex gap-1 whitespace-nowrap rounded-lg border border-zinc-800 bg-zinc-900/50 p-1">
+        {TABS.map((t) => {
+          const active = t.id === activeTab;
+          return (
+            <button
+              key={t.id}
+              onClick={() => setActiveTab(t.id)}
+              className={`relative flex shrink-0 items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition ${
+                active ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200'
+              }`}
+            >
+              <t.icon className="h-4 w-4" />
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -964,14 +964,14 @@ function VelocityTab({ data }: { data: FetchResult }) {
             <BarChart data={authorChartData} layout="vertical" margin={{ left: 20, right: 12 }}>
               <defs>
                 <linearGradient id="authorGrad" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#6366f1" stopOpacity={0.9} />
-                  <stop offset="100%" stopColor="#a1a1aa" stopOpacity={0.7} />
+                  <stop offset="0%" stopColor="#818cf8" stopOpacity={1} />
+                  <stop offset="100%" stopColor="#6366f1" stopOpacity={0.8} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#27272a" horizontal={false} />
               <XAxis type="number" stroke="#52525b" fontSize={11} allowDecimals={false} />
               <YAxis type="category" dataKey="name" stroke="#52525b" fontSize={11} width={90} />
-              <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
+              <Tooltip contentStyle={{ ...TOOLTIP_STYLE, padding: '8px 12px' }} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
               <Bar dataKey="value" radius={[0, 4, 4, 0]} fill="url(#authorGrad)" />
             </BarChart>
           </ResponsiveContainer>
@@ -991,7 +991,7 @@ function VelocityTab({ data }: { data: FetchResult }) {
                 href={commitUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-start gap-3 rounded-lg p-1.5 -m-1.5 transition hover:bg-zinc-800/50"
+                className="flex items-start gap-3 rounded-lg p-2.5 transition hover:bg-zinc-900/50 cursor-pointer"
               >
                 {avatar ? (
                   <img src={avatar} alt={author} className="h-7 w-7 rounded-full border border-zinc-800 shrink-0" />
@@ -1279,6 +1279,8 @@ function LanguagesTab({ data }: { data: FetchResult }) {
         </div>
       </Card>
 
+      <DependenciesCard deps={data.dependencies} />
+
       <Card className="lg:col-span-2">
         <div className="flex h-4 w-full overflow-hidden rounded-full border border-zinc-800">
           {entries.map(([name, bytes]) => {
@@ -1296,6 +1298,75 @@ function LanguagesTab({ data }: { data: FetchResult }) {
         </div>
       </Card>
     </div>
+  );
+}
+
+/* ---------- Dependencies Card ---------- */
+function DependenciesCard({ deps }: { deps: FetchResult['dependencies'] }) {
+  const depEntries = useMemo(
+    () => Object.entries(deps?.dependencies ?? {}),
+    [deps]
+  );
+  const devEntries = useMemo(
+    () => Object.entries(deps?.devDependencies ?? {}),
+    [deps]
+  );
+
+  if (!deps?.hasPackageJson) {
+    return (
+      <Card title="Core Dependencies" icon={Package}>
+        <div className="flex flex-col items-center justify-center py-10 text-center">
+          <Package className="h-8 w-8 text-zinc-700" />
+          <p className="mt-3 text-sm text-zinc-500">
+            No package.json found — this may not be a JavaScript/TypeScript project.
+          </p>
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <Card title="Core Dependencies" icon={Package}>
+      <div className="space-y-4">
+        {depEntries.length > 0 && (
+          <div>
+            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500">Dependencies</p>
+            <div className="flex flex-wrap gap-2">
+              {depEntries.map(([name, version]) => (
+                <span
+                  key={name}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-zinc-800/50 px-3 py-1 text-sm text-zinc-300 transition hover:bg-zinc-800/80"
+                >
+                  {name}
+                  <span className="text-zinc-500">{version.replace(/[\^~]/, '')}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+        {devEntries.length > 0 && (
+          <div>
+            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500">Dev Dependencies</p>
+            <div className="flex flex-wrap gap-2">
+              {devEntries.slice(0, 20).map(([name, version]) => (
+                <span
+                  key={name}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-zinc-800/30 px-3 py-1 text-sm text-zinc-400 transition hover:bg-zinc-800/50"
+                >
+                  {name}
+                  <span className="text-zinc-600">{version.replace(/[\^~]/, '')}</span>
+                </span>
+              ))}
+              {devEntries.length > 20 && (
+                <span className="inline-flex items-center rounded-full bg-zinc-800/20 px-3 py-1 text-sm text-zinc-500">
+                  +{devEntries.length - 20} more
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </Card>
   );
 }
 
@@ -1414,11 +1485,12 @@ function AuthModal({
 
 /* ---------- Profile Modal — Premium Glassmorphic Command Center ---------- */
 function ProfileModal({
-  onClose, showToast, initialTab = 'bookmarks',
+  onClose, showToast, initialTab = 'bookmarks', onBookmarkChanged,
 }: {
   onClose: () => void;
   showToast: (msg: string) => void;
   initialTab?: 'bookmarks' | 'audits';
+  onBookmarkChanged?: () => void;
 }) {
   const { user, signOut } = useAuth();
   const [reports, setReports] = useState<ArchivedReport[]>([]);
@@ -1462,6 +1534,7 @@ function ProfileModal({
       .eq('repo_full_name', repoName);
     if (!error) {
       setBookmarkItems((prev) => prev.filter((b) => b !== repoName));
+      onBookmarkChanged?.();
       showToast('Bookmark removed');
     }
   };
