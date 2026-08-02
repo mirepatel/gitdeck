@@ -11,11 +11,11 @@ import {
   ChevronRight, Sparkles, Gauge, Bookmark, LogOut, User as UserIcon,
   Archive, Loader2, Mail, Lock, ChevronDown, Settings, KeyRound, Trash2,
   ArrowRight, Zap, FileJson, FileType, ChevronDown as ChevronDownIcon, Package,
-  Heart, Check, BookOpen, FileText, GitPullRequest,
+  Heart, Check, BookOpen, FileText, GitPullRequest, ExternalLink,
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { fetchRepoData, parseRepoInput, getStoredToken, setStoredToken } from './github';
-import type { FetchResult, RepoData, CommunityProfile } from './types';
+import type { FetchResult, RepoData, CommunityProfile, IssueItem } from './types';
 import type { User } from '@supabase/supabase-js';
 import {
   formatNumber, timeAgo, commitTimeline, authorDistribution,
@@ -249,10 +249,10 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/20 via-zinc-950 to-zinc-950 text-zinc-200">
-      {/* Ambient radial glow background */}
-      <div className="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/20 via-zinc-950 to-zinc-950" />
-      {/* Faint dark CSS grid pattern overlay */}
+    <div className="min-h-screen bg-transparent text-zinc-200">
+      {/* Ambient radial glow + grid background (fixed, non-blocking) */}
+      <div className="fixed inset-0 -z-10 bg-zinc-950" />
+      <div className="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_50%_50%_at_50%_0%,rgba(99,102,241,0.18),transparent_70%)]" />
       <div className="fixed inset-0 -z-10 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px]" />
 
       <Header
@@ -276,7 +276,7 @@ export default function App() {
         onLogoClick={() => { setActiveRepo(null); setInput(''); }}
       />
 
-      <main className="mx-auto max-w-7xl px-4 pb-24 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-7xl px-4 pb-24 sm:px-6 lg:px-8 bg-transparent">
         <AnimatePresence mode="wait">
           {showHero && (
             <HeroSection
@@ -322,17 +322,18 @@ export default function App() {
                     exit={{ opacity: 0, y: -12 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <VitalsBanner
-                      repo={data.repo}
-                      data={data}
-                      isBookmarked={isBookmarked}
-                      onBookmark={toggleBookmark}
-                      bookmarking={bookmarking}
-                      onExport={onExport}
-                      canExport={!!data.repo && !loading}
-                    />
-                    <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
-                    <div className="mt-6 min-w-0">
+                    <div className="flex flex-col gap-6">
+                      <VitalsBanner
+                        repo={data.repo}
+                        data={data}
+                        isBookmarked={isBookmarked}
+                        onBookmark={toggleBookmark}
+                        bookmarking={bookmarking}
+                        onExport={onExport}
+                        canExport={!!data.repo && !loading}
+                      />
+                      <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
+                      <div className="min-w-0">
                       <AnimatePresence mode="wait">
                         <motion.div
                           key={activeTab}
@@ -348,6 +349,7 @@ export default function App() {
                           {activeTab === 'languages' && <LanguagesTab data={data} />}
                         </motion.div>
                       </AnimatePresence>
+                      </div>
                     </div>
                   </motion.div>
                 )}
@@ -369,9 +371,6 @@ export default function App() {
             onClose={() => setReportOpen(false)}
             onSaveToStorage={saveToStorage}
             canSaveToStorage={!!user}
-            repoFullName={reportData?.repo?.full_name ?? ''}
-            healthScoreValue={reportData ? healthScore(reportData.commits, reportData.issues).score : 0}
-            showToast={showToast}
           />
         )}
       </AnimatePresence>
@@ -794,7 +793,7 @@ function VitalsBanner({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
-      className="mt-6 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/50 backdrop-blur-sm"
+      className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/50 backdrop-blur-sm"
     >
       <div className="flex flex-col gap-4 p-5 sm:p-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex items-start gap-4 min-w-0">
@@ -872,7 +871,7 @@ function VitalsBanner({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 w-full px-5 sm:px-6 pb-5 sm:pb-6 pt-4 border-t border-zinc-800/50 mt-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 w-full px-5 sm:px-6 pb-5 sm:pb-6 pt-4 border-t border-zinc-800/50">
         {vitals.map((v) => (
           <div key={v.label} className="flex flex-col p-4 rounded-xl border border-transparent hover:border-white/5 hover:bg-white/[0.02] transition-all duration-200">
             <div className="flex items-center gap-1.5 text-sm text-zinc-400 font-medium mb-1.5">
@@ -1102,6 +1101,8 @@ function IssuesTab({ data }: { data: FetchResult }) {
       </Card>
 
       <CommunityStandardsCard community={data.community} />
+
+      <GoodFirstIssuesCard issues={data.issues} repoFullName={data.repo?.full_name ?? ''} />
     </div>
   );
 }
@@ -1184,20 +1185,102 @@ function CommunityStandardsCard({ community }: { community: CommunityProfile | n
                   key={item.label}
                   className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition ${
                     present
-                      ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
-                      : 'border-zinc-800/50 bg-zinc-900/20 text-zinc-600 opacity-50'
+                      ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                      : 'bg-zinc-900/30 text-zinc-600 border border-zinc-800/50 opacity-50'
                   }`}
                 >
                   {present ? (
-                    <Check className="h-4 w-4 shrink-0 text-emerald-400" strokeWidth={3} />
+                    <Check className="h-4 w-4 shrink-0 text-emerald-400" />
                   ) : (
-                    <X className="h-4 w-4 shrink-0 text-zinc-700" />
+                    <X className="h-4 w-4 shrink-0 text-zinc-600" />
                   )}
                   <span className="truncate font-medium">{item.label}</span>
                 </div>
               );
             })}
           </div>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+/* ---------- Good First Issues Card ---------- */
+function GoodFirstIssuesCard({ issues, repoFullName }: { issues: IssueItem[]; repoFullName: string }) {
+  const goodIssues = useMemo(() => {
+    return issues
+      .filter(
+        (issue) =>
+          issue.state === 'open' &&
+          !issue.pull_request &&
+          issue.labels.some(
+            (l) =>
+              l.name.toLowerCase() === 'good first issue' ||
+              l.name.toLowerCase() === 'help wanted'
+          )
+      )
+      .slice(0, 5);
+  }, [issues]);
+
+  return (
+    <Card title="Good First Issues" icon={Sparkles} className="lg:col-span-2">
+      {goodIssues.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-8 text-center">
+          <Sparkles className="h-7 w-7 text-zinc-700" />
+          <p className="mt-3 text-sm text-zinc-500">
+            No open issues labeled “good first issue” or “help wanted” right now.
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {goodIssues.map((issue, i) => (
+            <motion.a
+              key={issue.id}
+              href={`https://github.com/${repoFullName}/issues/${issue.number}`}
+              target="_blank"
+              rel="noreferrer"
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.05 }}
+              className="group flex items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 transition hover:border-indigo-500/30 hover:bg-zinc-900"
+            >
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-indigo-500/20 bg-indigo-500/10">
+                <Sparkles className="h-4 w-4 text-indigo-400" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-zinc-200 group-hover:text-white">
+                  {issue.title}
+                </p>
+                <div className="mt-0.5 flex items-center gap-2 text-[11px] text-zinc-500">
+                  <span>#{issue.number}</span>
+                  <span>·</span>
+                  <span>@{issue.user.login}</span>
+                  {issue.comments > 0 && (
+                    <>
+                      <span>·</span>
+                      <span>{issue.comments} comment{issue.comments !== 1 ? 's' : ''}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="flex shrink-0 items-center gap-1.5">
+                {issue.labels.slice(0, 2).map((label) => (
+                  <span
+                    key={label.name}
+                    className="rounded-full px-2 py-0.5 text-[10px] font-medium"
+                    style={{
+                      backgroundColor: `#${label.color}22`,
+                      color: `#${label.color}`,
+                      border: `1px solid #${label.color}44`,
+                    }}
+                  >
+                    {label.name}
+                  </span>
+                ))}
+                <ExternalLink className="h-3.5 w-3.5 text-zinc-600 transition group-hover:text-indigo-400" />
+              </div>
+            </motion.a>
+          ))}
         </div>
       )}
     </Card>
@@ -2275,7 +2358,6 @@ function Toast({ message }: { message: string | null }) {
 /* ---------- Report Modal ---------- */
 function ReportModal({
   text, copied, onCopy, onDownload, onClose, onSaveToStorage, canSaveToStorage,
-  repoFullName, healthScoreValue, showToast,
 }: {
   text: string;
   copied: boolean;
@@ -2284,29 +2366,8 @@ function ReportModal({
   onClose: () => void;
   onSaveToStorage: () => void;
   canSaveToStorage: boolean;
-  repoFullName: string;
-  healthScoreValue: number;
-  showToast: (msg: string) => void;
 }) {
   const [exportOpen, setExportOpen] = useState(false);
-  const [badgeOpen, setBadgeOpen] = useState(false);
-
-  const badgeColor =
-    healthScoreValue >= 80 ? 'brightgreen'
-      : healthScoreValue >= 60 ? 'green'
-      : healthScoreValue >= 40 ? 'yellow'
-      : 'red';
-  const badgeUrl = `https://img.shields.io/badge/GitDeck_Health-${healthScoreValue}%2F100-${badgeColor}`;
-  const badgeMarkdown = `[![GitDeck Health](${badgeUrl})](https://github.com/${repoFullName})`;
-
-  const copyBadge = async () => {
-    try {
-      await navigator.clipboard.writeText(badgeMarkdown);
-      showToast('Badge markdown copied!');
-    } catch {
-      showToast('Copy failed — select and copy manually.');
-    }
-  };
 
   return (
     <motion.div
@@ -2336,23 +2397,6 @@ function ReportModal({
           <pre className="whitespace-pre-wrap break-words rounded-xl border border-zinc-800 bg-black/40 p-4 text-[11px] leading-relaxed text-zinc-300 font-mono">
             {text}
           </pre>
-          {badgeOpen && (
-            <div className="mt-4 rounded-xl border border-zinc-800 bg-black/40 p-4">
-              <p className="mb-3 text-xs font-medium uppercase tracking-wide text-zinc-500">README Badge Preview</p>
-              <div className="mb-3 flex items-center gap-2">
-                <img src={badgeUrl} alt="GitDeck Health Badge" className="h-5" />
-              </div>
-              <pre className="whitespace-pre-wrap break-words rounded-lg border border-zinc-800 bg-zinc-950 p-3 text-[11px] leading-relaxed text-zinc-300 font-mono">
-                {badgeMarkdown}
-              </pre>
-              <button
-                onClick={copyBadge}
-                className="mt-3 flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-xs font-medium text-black transition hover:bg-zinc-200"
-              >
-                <CheckCircle2 className="h-3.5 w-3.5" /> Copy Badge Markdown
-              </button>
-            </div>
-          )}
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2 border-t border-zinc-800 p-4">
           {/* Export dropdown */}
@@ -2397,12 +2441,6 @@ function ReportModal({
               )}
             </AnimatePresence>
           </div>
-          <button
-            onClick={() => setBadgeOpen((v) => !v)}
-            className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition ${badgeOpen ? 'border-indigo-500/40 bg-indigo-500/10 text-indigo-300' : 'border-zinc-800 bg-zinc-900 text-zinc-200 hover:bg-zinc-800'}`}
-          >
-            <Code2 className="h-3.5 w-3.5" /> Get README Badge
-          </button>
           <button
             onClick={onSaveToStorage}
             disabled={!canSaveToStorage}
