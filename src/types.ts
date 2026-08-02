@@ -69,6 +69,18 @@ export interface DependencyInfo {
   hasPackageJson: boolean;
 }
 
+export interface CommunityProfile {
+  health_percentage: number;
+  files: {
+    code_of_conduct: boolean | null;
+    contributing: boolean | null;
+    issue_template: boolean | null;
+    pull_request_template: boolean | null;
+    license: boolean | null;
+    readme: boolean | null;
+  };
+}
+
 export interface FetchResult {
   repo: RepoData | null;
   commits: CommitItem[];
@@ -76,6 +88,7 @@ export interface FetchResult {
   contributors: ContributorItem[];
   languages: Languages;
   dependencies: DependencyInfo;
+  community: CommunityProfile | null;
   error: string | null;
   rateLimit: { remaining: number; limit: number; reset: number } | null;
 }

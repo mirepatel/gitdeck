@@ -49,15 +49,7 @@ export async function fetchRepoData(
   repo: string
 ): Promise<FetchResult> {
   try {
-    // Priority: localStorage PAT → env var fallback
-    const localToken = getStoredToken();
-    let envToken: string | undefined;
-    try {
-      envToken = import.meta.env.VITE_GITHUB_TOKEN as string | undefined;
-    } catch {
-      envToken = undefined;
-    }
-    const token = localToken || envToken || null;
+    const token = getStoredToken();
 
     const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/github-proxy`;
     const params = new URLSearchParams({
@@ -83,6 +75,7 @@ export async function fetchRepoData(
         contributors: [],
         languages: {},
         dependencies: { dependencies: {}, devDependencies: {}, hasPackageJson: false },
+        community: null,
         error: body?.error ?? `Server error (${res.status}).`,
         rateLimit: body?.rateLimit ?? null,
       };
@@ -96,6 +89,7 @@ export async function fetchRepoData(
       contributors: body.contributors ?? [],
       languages: body.languages ?? {},
       dependencies: body.dependencies ?? { dependencies: {}, devDependencies: {}, hasPackageJson: false },
+      community: body.community ?? null,
       error: body.error ?? null,
       rateLimit: body.rateLimit ?? null,
     };
@@ -107,6 +101,7 @@ export async function fetchRepoData(
       contributors: [],
       languages: {},
       dependencies: { dependencies: {}, devDependencies: {}, hasPackageJson: false },
+      community: null,
       error: e instanceof Error ? `Network error: ${e.message}` : 'Network error reaching server.',
       rateLimit: null,
     };

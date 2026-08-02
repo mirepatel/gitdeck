@@ -115,12 +115,23 @@ Deno.serve(async (req: Request) => {
         );
       }
 
-      const [commits, issues, contributors, languages, pkg] = await Promise.all([
+      const [commits, issues, contributors, languages, pkg, community] = await Promise.all([
         ghFetch<unknown[]>(`/repos/${owner}/${repo}/commits?per_page=100`, token),
         ghFetch<unknown[]>(`/repos/${owner}/${repo}/issues?state=all&per_page=100`, token),
         ghFetch<unknown[]>(`/repos/${owner}/${repo}/contributors?per_page=100&anon=true`, token),
         ghFetch<Record<string, number>>(`/repos/${owner}/${repo}/languages`, token),
         ghFetch<{ content?: string; encoding?: string }>(`/repos/${owner}/${repo}/contents/package.json`, token),
+        ghFetch<{
+          health_percentage: number;
+          files: {
+            code_of_conduct: boolean | null;
+            contributing: boolean | null;
+            issue_template: boolean | null;
+            pull_request_template: boolean | null;
+            license: boolean | null;
+            readme: boolean | null;
+          };
+        }>(`/repos/${owner}/${repo}/community/profile`, token),
       ]);
 
       let dependencies = { dependencies: {}, devDependencies: {}, hasPackageJson: false };
@@ -146,6 +157,7 @@ Deno.serve(async (req: Request) => {
           contributors: contributors.data ?? [],
           languages: languages.data ?? {},
           dependencies,
+          community: community.data ?? null,
           rateLimit: base.rateLimit,
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }

@@ -11,10 +11,11 @@ import {
   ChevronRight, Sparkles, Gauge, Bookmark, LogOut, User as UserIcon,
   Archive, Loader2, Mail, Lock, ChevronDown, Settings, KeyRound, Trash2,
   ArrowRight, Zap, FileJson, FileType, ChevronDown as ChevronDownIcon, Package,
+  Heart, Check, BookOpen, FileText, GitPullRequest,
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { fetchRepoData, parseRepoInput, getStoredToken, setStoredToken } from './github';
-import type { FetchResult, RepoData } from './types';
+import type { FetchResult, RepoData, CommunityProfile } from './types';
 import type { User } from '@supabase/supabase-js';
 import {
   formatNumber, timeAgo, commitTimeline, authorDistribution,
@@ -135,6 +136,7 @@ export default function App() {
       setData({
         repo: null, commits: [], issues: [], contributors: [], languages: {},
         dependencies: { dependencies: {}, devDependencies: {}, hasPackageJson: false },
+        community: null,
         error: 'Enter a valid repo like "owner/name" or a GitHub URL.', rateLimit: null,
       });
       return;
@@ -247,11 +249,11 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/15 via-zinc-950 to-zinc-950 text-zinc-200">
+    <div className="min-h-screen bg-zinc-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/20 via-zinc-950 to-zinc-950 text-zinc-200">
       {/* Ambient radial glow background */}
-      <div className="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/15 via-zinc-950 to-zinc-950" />
+      <div className="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/20 via-zinc-950 to-zinc-950" />
       {/* Faint dark CSS grid pattern overlay */}
-      <div className="fixed inset-0 -z-10 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
+      <div className="fixed inset-0 -z-10 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px]" />
 
       <Header
         input={input}
@@ -538,7 +540,7 @@ function Header({
   return (
     <header className="sticky top-0 z-30 border-b border-zinc-800/50 glass">
       <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between w-full flex-wrap gap-y-3">
+        <div className="relative flex items-center justify-between w-full flex-wrap gap-y-3">
           {/* Left Column — Logo + tagline (clickable → home) */}
           <div className="flex items-center">
             <button
@@ -557,29 +559,46 @@ function Header({
             </button>
           </div>
 
-          {/* Center Column — Search bar */}
-          <div className="order-3 sm:order-2 w-full sm:w-auto sm:flex-[2] flex justify-center">
-            {showSearch && (
-              <form onSubmit={onSubmit} className="w-full max-w-xl">
-                <div className="group relative">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500 group-focus-within:text-zinc-300 transition-colors" />
-                  <input
-                    ref={searchInputRef}
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder="Search public repo (e.g. facebook/react)..."
-                    className="h-9 w-full rounded-xl border border-zinc-800 bg-zinc-900/60 pl-10 pr-20 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none transition focus:border-zinc-600 focus:ring-2 focus:ring-indigo-500/20"
-                  />
-                  <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 hidden items-center gap-0.5 rounded-md border border-zinc-700 bg-zinc-800/80 px-1.5 py-0.5 text-[10px] font-medium text-zinc-400 sm:flex">
-                    {shortcutLabel}
-                  </kbd>
-                </div>
-              </form>
-            )}
-          </div>
+          {/* Center Column — Search bar (absolute centered on desktop) */}
+          {showSearch && (
+            <form
+              onSubmit={onSubmit}
+              className="hidden md:flex absolute left-1/2 -translate-x-1/2 w-full max-w-md lg:max-w-lg"
+            >
+              <div className="group relative w-full">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500 group-focus-within:text-zinc-300 transition-colors" />
+                <input
+                  ref={searchInputRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Search public repo (e.g. facebook/react)..."
+                  className="h-9 w-full rounded-xl border border-zinc-800 bg-zinc-900/60 pl-10 pr-20 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none transition focus:border-zinc-600 focus:ring-2 focus:ring-indigo-500/20"
+                />
+                <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 hidden items-center gap-0.5 rounded-md border border-zinc-700 bg-zinc-800/80 px-1.5 py-0.5 text-[10px] font-medium text-zinc-400 sm:flex">
+                  {shortcutLabel}
+                </kbd>
+              </div>
+            </form>
+          )}
+
+          {/* Mobile search — full-width row below */}
+          {showSearch && (
+            <form onSubmit={onSubmit} className="md:hidden order-3 w-full flex justify-center">
+              <div className="group relative w-full max-w-md">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500 group-focus-within:text-zinc-300 transition-colors" />
+                <input
+                  ref={searchInputRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Search public repo (e.g. facebook/react)..."
+                  className="h-9 w-full rounded-xl border border-zinc-800 bg-zinc-900/60 pl-10 pr-20 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none transition focus:border-zinc-600 focus:ring-2 focus:ring-indigo-500/20"
+                />
+              </div>
+            </form>
+          )}
 
           {/* Right Column — Controls */}
-          <div className="flex-1 flex justify-end items-center gap-2 sm:gap-4 order-2 sm:order-3">
+          <div className="flex justify-end items-center gap-2 sm:gap-4">
             {/* Rate limit pill */}
             {rateLimit && (
               <div className="flex h-9 items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-2.5 text-[11px] text-zinc-500">
@@ -849,12 +868,12 @@ function VitalsBanner({
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 w-full px-5 sm:px-6 pb-5 sm:pb-6 pt-4 border-t border-zinc-800/50 mt-6">
         {vitals.map((v) => (
-          <div key={v.label} className="flex flex-col justify-center rounded-lg border border-transparent hover:border-white/5 hover:bg-white/[0.02] transition-colors px-2 py-1.5">
-            <div className="flex items-center gap-1.5 text-zinc-400 text-sm font-medium">
+          <div key={v.label} className="flex flex-col p-4 rounded-xl border border-transparent hover:border-white/5 hover:bg-white/[0.02] transition-all duration-200">
+            <div className="flex items-center gap-1.5 text-sm text-zinc-400 font-medium mb-1.5">
               <v.icon className="h-3.5 w-3.5 text-zinc-400" />
               {v.label}
             </div>
-            <div className="mt-1.5 text-3xl font-semibold text-white tracking-tight truncate">
+            <div className="text-2xl font-semibold text-white tracking-tight truncate">
               {v.value}
             </div>
           </div>
@@ -1075,6 +1094,8 @@ function IssuesTab({ data }: { data: FetchResult }) {
           <Stat label="Avg Age (open)" value={`${stats.avgAgeOpen}d`} icon={Clock} />
         </div>
       </Card>
+
+      <CommunityStandardsCard community={data.community} />
     </div>
   );
 }
@@ -1087,13 +1108,93 @@ function Stat({
   icon: React.ComponentType<{ className?: string }>;
 }) {
   return (
-    <div className="flex flex-col justify-center rounded-lg border border-transparent hover:border-white/5 hover:bg-white/[0.02] transition-colors px-2 py-1.5">
-      <div className="flex items-center gap-1.5 text-zinc-400 text-sm font-medium">
+    <div className="flex flex-col p-4 rounded-xl border border-transparent hover:border-white/5 hover:bg-white/[0.02] transition-all duration-200">
+      <div className="flex items-center gap-1.5 text-sm text-zinc-400 font-medium mb-1.5">
         <Icon className="h-3.5 w-3.5 text-zinc-400" />
         {label}
       </div>
-      <div className="mt-1.5 text-3xl font-semibold text-white tracking-tight truncate">{value}</div>
+      <div className="text-2xl font-semibold text-white tracking-tight truncate">{value}</div>
     </div>
+  );
+}
+
+/* ---------- Community Standards Card ---------- */
+function CommunityStandardsCard({ community }: { community: CommunityProfile | null }) {
+  const items = useMemo(() => {
+    if (!community?.files) return [];
+    return [
+      { label: 'Code of Conduct', ok: community.files.code_of_conduct, icon: Heart },
+      { label: 'Contributing Guide', ok: community.files.contributing, icon: FileText },
+      { label: 'Issue Templates', ok: community.files.issue_template, icon: AlertCircle },
+      { label: 'PR Template', ok: community.files.pull_request_template, icon: GitPullRequest },
+      { label: 'License', ok: community.files.license, icon: Scale },
+      { label: 'README', ok: community.files.readme, icon: BookOpen },
+    ];
+  }, [community]);
+
+  const pct = community?.health_percentage ?? 0;
+  const ringColor =
+    pct >= 80 ? '#34d399' : pct >= 50 ? '#fbbf24' : '#f87171';
+  const circumference = 2 * Math.PI * 32;
+  const dashOffset = circumference - (pct / 100) * circumference;
+
+  return (
+    <Card title="Community Standards" icon={Heart} className="lg:col-span-2">
+      {!community ? (
+        <div className="flex flex-col items-center justify-center py-10 text-center">
+          <Heart className="h-8 w-8 text-zinc-700" />
+          <p className="mt-3 text-sm text-zinc-500">
+            Community profile data is not available for this repository.
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
+          {/* Circular progress ring */}
+          <div className="flex shrink-0 flex-col items-center gap-2">
+            <div className="relative h-20 w-20">
+              <svg className="h-20 w-20 -rotate-90" viewBox="0 0 72 72">
+                <circle cx="36" cy="36" r="32" fill="none" stroke="#27272a" strokeWidth="6" />
+                <circle
+                  cx="36" cy="36" r="32" fill="none"
+                  stroke={ringColor} strokeWidth="6" strokeLinecap="round"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={dashOffset}
+                  className="transition-all duration-700 ease-out"
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-lg font-semibold text-white">{pct}%</span>
+              </div>
+            </div>
+            <span className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">Health</span>
+          </div>
+
+          {/* Checklist grid */}
+          <div className="grid flex-1 grid-cols-2 gap-2 sm:grid-cols-3">
+            {items.map((item) => {
+              const present = item.ok === true;
+              return (
+                <div
+                  key={item.label}
+                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition ${
+                    present
+                      ? 'border-emerald-500/20 bg-emerald-500/5 text-zinc-200'
+                      : 'border-zinc-800 bg-zinc-900/40 text-zinc-500'
+                  }`}
+                >
+                  {present ? (
+                    <Check className="h-4 w-4 shrink-0 text-emerald-400" />
+                  ) : (
+                    <X className="h-4 w-4 shrink-0 text-zinc-600" />
+                  )}
+                  <span className="truncate font-medium">{item.label}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </Card>
   );
 }
 
