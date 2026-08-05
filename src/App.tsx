@@ -92,12 +92,13 @@ export default function App() {
     setHasToken(!!getStoredToken());
   }, [settingsOpen]);
 
-  /* Global ⌘K / Ctrl+K shortcut — focuses the header search */
+  /* Global ⌘K / Ctrl+K shortcut — focuses the header search from any page */
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        searchInputRef.current?.focus();
+        const el = document.getElementById('global-search-input') as HTMLInputElement | null;
+        el?.focus();
       }
     };
     window.addEventListener('keydown', handler);
@@ -335,7 +336,7 @@ export default function App() {
                         canExport={!!data.repo && !loading}
                       />
                       <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl overflow-hidden">
-                        <div className="p-3 bg-zinc-900/80 border-b border-zinc-800/80 flex flex-row gap-2 overflow-x-auto no-scrollbar">
+                        <div className="flex flex-row gap-4 border-b border-zinc-800 w-full overflow-x-auto px-6 pt-2 no-scrollbar">
                           {TABS.map((t) => {
                             const active = t.id === activeTab;
                             return (
@@ -343,8 +344,8 @@ export default function App() {
                                 key={t.id}
                                 onClick={() => setActiveTab(t.id)}
                                 className={active
-                                  ? 'flex shrink-0 items-center gap-2 bg-zinc-800 text-white border border-white/10 rounded-lg px-4 py-2 font-medium text-sm shadow-sm'
-                                  : 'flex shrink-0 items-center gap-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40 rounded-lg px-4 py-2 text-sm transition-all'
+                                  ? 'flex shrink-0 items-center gap-2 text-white border-b-2 border-white pb-3 font-medium text-sm transition-all'
+                                  : 'flex shrink-0 items-center gap-2 text-zinc-400 hover:text-zinc-200 border-b-2 border-transparent pb-3 text-sm transition-all'
                                 }
                               >
                                 <t.icon className="h-4 w-4" />
@@ -594,6 +595,7 @@ function Header({
               <div className="group relative w-full">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500 group-focus-within:text-zinc-300 transition-colors" />
                 <input
+                  id="global-search-input"
                   ref={searchInputRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
@@ -613,6 +615,7 @@ function Header({
               <div className="group relative w-full max-w-md">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500 group-focus-within:text-zinc-300 transition-colors" />
                 <input
+                  id="global-search-input"
                   ref={searchInputRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
@@ -725,7 +728,7 @@ function PresetBar({
     <div className="mt-6 space-y-6">
       <div className="flex flex-wrap items-center gap-2">
         <span className="flex items-center text-xs text-zinc-500 mr-1">
-          <Zap className="h-3.5 w-3.5 text-zinc-400 inline mr-1.5" />
+          <Zap className="h-4 w-4 text-zinc-500 inline mr-1.5" />
           Quick select:
         </span>
         {PRESETS.map((p) => {
@@ -865,15 +868,15 @@ function VitalsBanner({
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-2.5 md:ml-auto">
+              <div className="ml-auto flex items-center gap-2">
                 <button
                   onClick={onBookmark}
                   disabled={bookmarking}
-                  title="Bookmark this repo"
-                  className={`flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-all shadow-sm border disabled:opacity-50 ${
+                  title={isBookmarked ? 'Remove bookmark' : 'Bookmark this repo'}
+                  className={`flex h-9 w-9 items-center justify-center rounded-lg border transition-all disabled:opacity-50 ${
                     isBookmarked
                       ? 'border-amber-500/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20'
-                      : 'bg-zinc-800/80 hover:bg-zinc-700/80 text-zinc-200 hover:text-white border-white/10'
+                      : 'border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800 text-zinc-400 hover:text-white'
                   }`}
                 >
                   {bookmarking ? (
@@ -881,15 +884,14 @@ function VitalsBanner({
                   ) : (
                     <Star className={`h-4 w-4 ${isBookmarked ? 'fill-amber-400 text-amber-400' : ''}`} />
                   )}
-                  {isBookmarked ? 'Bookmarked' : 'Bookmark'}
                 </button>
                 <button
                   onClick={onExport}
                   disabled={!canExport}
-                  className="flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-all shadow-sm border bg-zinc-800/80 hover:bg-zinc-700/80 text-zinc-200 hover:text-white border-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
+                  title="Export audit report"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <Download className="h-4 w-4" />
-                  Export Audit
                 </button>
               </div>
             </div>
@@ -1347,7 +1349,7 @@ function ContributorsTab({ data }: { data: FetchResult }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3 overflow-x-auto no-scrollbar pb-1">
+      <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-2">
         {topContributors.map((c, i) => (
           <a
             key={c.login}
@@ -1366,7 +1368,7 @@ function ContributorsTab({ data }: { data: FetchResult }) {
               }
             />
             {i === 0 && (
-              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-400 text-[9px] font-bold text-black">
+              <span className="absolute top-0 left-0 flex h-4 w-4 items-center justify-center rounded-full bg-amber-400 text-[9px] font-bold text-black ring-2 ring-zinc-950">
                 1
               </span>
             )}
