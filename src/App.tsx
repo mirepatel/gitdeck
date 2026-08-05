@@ -92,14 +92,12 @@ export default function App() {
     setHasToken(!!getStoredToken());
   }, [settingsOpen]);
 
-  /* Global ⌘K / Ctrl+K shortcut — focuses and selects the header search */
+  /* Global ⌘K / Ctrl+K shortcut — focuses the header search */
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        const el = searchInputRef.current ?? document.querySelector<HTMLInputElement>('input[type="text"]');
-        el?.focus();
-        el?.select();
+        searchInputRef.current?.focus();
       }
     };
     window.addEventListener('keydown', handler);
@@ -326,7 +324,7 @@ export default function App() {
                     exit={{ opacity: 0, y: -12 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <div className="flex flex-col gap-6">
+                    <div className="mt-6 space-y-6">
                       <VitalsBanner
                         repo={data.repo}
                         data={data}
@@ -336,23 +334,42 @@ export default function App() {
                         onExport={onExport}
                         canExport={!!data.repo && !loading}
                       />
-                      <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
-                      <div className="min-w-0">
-                      <AnimatePresence mode="wait">
-                        <motion.div
-                          key={activeTab}
-                          initial={{ opacity: 0, x: 16 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -16 }}
-                          transition={{ duration: 0.25 }}
-                          className="w-full min-w-0"
-                        >
-                          {activeTab === 'velocity' && <VelocityTab data={data} />}
-                          {activeTab === 'issues' && <IssuesTab data={data} />}
-                          {activeTab === 'contributors' && <ContributorsTab data={data} />}
-                          {activeTab === 'languages' && <LanguagesTab data={data} />}
-                        </motion.div>
-                      </AnimatePresence>
+                      <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl overflow-hidden">
+                        <div className="p-3 bg-zinc-900/80 border-b border-zinc-800/80 flex flex-row gap-2 overflow-x-auto no-scrollbar">
+                          {TABS.map((t) => {
+                            const active = t.id === activeTab;
+                            return (
+                              <button
+                                key={t.id}
+                                onClick={() => setActiveTab(t.id)}
+                                className={active
+                                  ? 'flex shrink-0 items-center gap-2 bg-zinc-800 text-white border border-white/10 rounded-lg px-4 py-2 font-medium text-sm shadow-sm'
+                                  : 'flex shrink-0 items-center gap-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40 rounded-lg px-4 py-2 text-sm transition-all'
+                                }
+                              >
+                                <t.icon className="h-4 w-4" />
+                                {t.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <div className="p-6 min-w-0">
+                          <AnimatePresence mode="wait">
+                            <motion.div
+                              key={activeTab}
+                              initial={{ opacity: 0, x: 16 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: -16 }}
+                              transition={{ duration: 0.25 }}
+                              className="w-full min-w-0"
+                            >
+                              {activeTab === 'velocity' && <VelocityTab data={data} />}
+                              {activeTab === 'issues' && <IssuesTab data={data} />}
+                              {activeTab === 'contributors' && <ContributorsTab data={data} />}
+                              {activeTab === 'languages' && <LanguagesTab data={data} />}
+                            </motion.div>
+                          </AnimatePresence>
+                        </div>
                       </div>
                     </div>
                   </motion.div>
@@ -708,7 +725,7 @@ function PresetBar({
     <div className="mt-6 space-y-6">
       <div className="flex flex-wrap items-center gap-2">
         <span className="flex items-center text-xs text-zinc-500 mr-1">
-          <Zap className="h-3.5 w-3.5 text-amber-400 inline mr-1.5" />
+          <Zap className="h-3.5 w-3.5 text-zinc-400 inline mr-1.5" />
           Quick select:
         </span>
         {PRESETS.map((p) => {
@@ -848,30 +865,30 @@ function VitalsBanner({
                   </span>
                 )}
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-2.5 md:ml-auto">
                 <button
                   onClick={onBookmark}
                   disabled={bookmarking}
                   title="Bookmark this repo"
-                  className={`flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition disabled:opacity-50 ${
+                  className={`flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-all shadow-sm border disabled:opacity-50 ${
                     isBookmarked
-                      ? 'border-amber-500/40 bg-amber-500/10 text-amber-300'
-                      : 'border-zinc-800 bg-zinc-900 text-zinc-300 hover:border-zinc-700 hover:bg-zinc-800'
+                      ? 'border-amber-500/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20'
+                      : 'bg-zinc-800/80 hover:bg-zinc-700/80 text-zinc-200 hover:text-white border-white/10'
                   }`}
                 >
                   {bookmarking ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    <Star className={`h-3 w-3 ${isBookmarked ? 'fill-amber-400 text-amber-400' : ''}`} />
+                    <Star className={`h-4 w-4 ${isBookmarked ? 'fill-amber-400 text-amber-400' : ''}`} />
                   )}
                   {isBookmarked ? 'Bookmarked' : 'Bookmark'}
                 </button>
                 <button
                   onClick={onExport}
                   disabled={!canExport}
-                  className="flex items-center gap-1 rounded-full border border-zinc-700 bg-zinc-100 px-2.5 py-0.5 text-[11px] font-medium text-black transition hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-all shadow-sm border bg-zinc-800/80 hover:bg-zinc-700/80 text-zinc-200 hover:text-white border-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  <Download className="h-3 w-3" />
+                  <Download className="h-4 w-4" />
                   Export Audit
                 </button>
               </div>
@@ -910,36 +927,6 @@ function VitalsBanner({
         ))}
       </div>
     </motion.div>
-  );
-}
-
-/* ---------- Tab Bar ---------- */
-function TabBar({
-  activeTab, setActiveTab,
-}: {
-  activeTab: TabId;
-  setActiveTab: (t: TabId) => void;
-}) {
-  return (
-    <div className="flex w-full justify-start overflow-x-auto no-scrollbar">
-      <div className="inline-flex gap-1 whitespace-nowrap rounded-lg border border-zinc-800 bg-zinc-900/50 p-1">
-        {TABS.map((t) => {
-          const active = t.id === activeTab;
-          return (
-            <button
-              key={t.id}
-              onClick={() => setActiveTab(t.id)}
-              className={`relative flex shrink-0 items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition ${
-                active ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200'
-              }`}
-            >
-              <t.icon className="h-4 w-4" />
-              {t.label}
-            </button>
-          );
-        })}
-      </div>
-    </div>
   );
 }
 
@@ -1356,8 +1343,42 @@ function ContributorsTab({ data }: { data: FetchResult }) {
       : bf.label === 'Moderate' ? 'bg-yellow-500'
       : 'bg-zinc-300';
 
+  const topContributors = data.contributors.slice(0, 8);
+
   return (
     <div className="space-y-4">
+      <div className="flex items-center gap-3 overflow-x-auto no-scrollbar pb-1">
+        {topContributors.map((c, i) => (
+          <a
+            key={c.login}
+            href={c.html_url}
+            target="_blank"
+            rel="noreferrer"
+            title={`@${c.login} — ${formatNumber(c.contributions)} commits`}
+            className="group relative shrink-0"
+          >
+            <img
+              src={c.avatar_url}
+              alt={c.login}
+              className={`h-11 w-11 rounded-full border-2 transition-all group-hover:scale-110 ${
+                i === 0 ? 'border-amber-400/60' : 'border-zinc-700 group-hover:border-zinc-500'
+              }`
+              }
+            />
+            {i === 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-400 text-[9px] font-bold text-black">
+                1
+              </span>
+            )}
+          </a>
+        ))}
+        {data.contributors.length > 8 && (
+          <span className="shrink-0 pl-1 text-xs text-zinc-500">
+            +{data.contributors.length - 8} more
+          </span>
+        )}
+      </div>
+
       <div className={`rounded-2xl border bg-gradient-to-br p-5 backdrop-blur-sm ${riskBg}`}>
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
