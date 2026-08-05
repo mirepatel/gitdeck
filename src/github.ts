@@ -76,6 +76,7 @@ export async function fetchRepoData(
         languages: {},
         dependencies: { dependencies: {}, devDependencies: {}, hasPackageJson: false },
         community: null,
+        release: null,
         error: body?.error ?? `Server error (${res.status}).`,
         rateLimit: body?.rateLimit ?? null,
       };
@@ -90,6 +91,7 @@ export async function fetchRepoData(
       languages: body.languages ?? {},
       dependencies: body.dependencies ?? { dependencies: {}, devDependencies: {}, hasPackageJson: false },
       community: body.community ?? null,
+      release: body.release ?? null,
       error: body.error ?? null,
       rateLimit: body.rateLimit ?? null,
     };
@@ -102,6 +104,7 @@ export async function fetchRepoData(
       languages: {},
       dependencies: { dependencies: {}, devDependencies: {}, hasPackageJson: false },
       community: null,
+      release: null,
       error: e instanceof Error ? `Network error: ${e.message}` : 'Network error reaching server.',
       rateLimit: null,
     };

@@ -115,7 +115,7 @@ Deno.serve(async (req: Request) => {
         );
       }
 
-      const [commits, issues, contributors, languages, pkg, community] = await Promise.all([
+      const [commits, issues, contributors, languages, pkg, community, release] = await Promise.all([
         ghFetch<unknown[]>(`/repos/${owner}/${repo}/commits?per_page=100`, token),
         ghFetch<unknown[]>(`/repos/${owner}/${repo}/issues?state=all&per_page=100`, token),
         ghFetch<unknown[]>(`/repos/${owner}/${repo}/contributors?per_page=100&anon=true`, token),
@@ -132,8 +132,11 @@ Deno.serve(async (req: Request) => {
             readme: boolean | null;
           };
         }>(`/repos/${owner}/${repo}/community/profile`, token),
+        ghFetch<{ tag_name: string; html_url: string; published_at: string; name: string | null }>(
+          `/repos/${owner}/${repo}/releases/latest`,
+          token
+        ),
       ]);
-
       let dependencies = { dependencies: {}, devDependencies: {}, hasPackageJson: false };
       if (pkg.data?.content) {
         try {
@@ -158,6 +161,7 @@ Deno.serve(async (req: Request) => {
           languages: languages.data ?? {},
           dependencies,
           community: community.data ?? null,
+          release: release.status === 404 ? null : release.data ?? null,
           rateLimit: base.rateLimit,
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }

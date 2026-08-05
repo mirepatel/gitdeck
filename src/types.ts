@@ -81,6 +81,13 @@ export interface CommunityProfile {
   };
 }
 
+export interface ReleaseData {
+  tag_name: string;
+  html_url: string;
+  published_at: string;
+  name: string | null;
+}
+
 export interface FetchResult {
   repo: RepoData | null;
   commits: CommitItem[];
@@ -89,6 +96,7 @@ export interface FetchResult {
   languages: Languages;
   dependencies: DependencyInfo;
   community: CommunityProfile | null;
+  release: ReleaseData | null;
   error: string | null;
   rateLimit: { remaining: number; limit: number; reset: number } | null;
 }

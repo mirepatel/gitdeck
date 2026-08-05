@@ -12,6 +12,7 @@ import {
   Archive, Loader2, Mail, Lock, ChevronDown, Settings, KeyRound, Trash2,
   ArrowRight, Zap, FileJson, FileType, ChevronDown as ChevronDownIcon, Package,
   Heart, Check, BookOpen, FileText, GitPullRequest, ExternalLink,
+  XCircle, Tag, GitBranch,
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { fetchRepoData, parseRepoInput, getStoredToken, setStoredToken } from './github';
@@ -91,12 +92,14 @@ export default function App() {
     setHasToken(!!getStoredToken());
   }, [settingsOpen]);
 
-  /* Global ⌘K / Ctrl+K shortcut — focuses the header search */
+  /* Global ⌘K / Ctrl+K shortcut — focuses and selects the header search */
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        searchInputRef.current?.focus();
+        const el = searchInputRef.current ?? document.querySelector<HTMLInputElement>('input[type="text"]');
+        el?.focus();
+        el?.select();
       }
     };
     window.addEventListener('keydown', handler);
@@ -137,6 +140,7 @@ export default function App() {
         repo: null, commits: [], issues: [], contributors: [], languages: {},
         dependencies: { dependencies: {}, devDependencies: {}, hasPackageJson: false },
         community: null,
+        release: null,
         error: 'Enter a valid repo like "owner/name" or a GitHub URL.', rateLimit: null,
       });
       return;
@@ -701,9 +705,12 @@ function PresetBar({
   user: User | null;
 }) {
   return (
-    <div className="mt-6 space-y-3">
+    <div className="mt-6 space-y-6">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs text-zinc-500 mr-1">Quick select:</span>
+        <span className="flex items-center text-xs text-zinc-500 mr-1">
+          <Zap className="h-3.5 w-3.5 text-amber-400 inline mr-1.5" />
+          Quick select:
+        </span>
         {PRESETS.map((p) => {
           const active = p === activeRepo;
           return (
@@ -764,6 +771,7 @@ function VitalsBanner({
   canExport: boolean;
 }) {
   const hs = useMemo(() => healthScore(data.commits, data.issues), [data.commits, data.issues]);
+  const release = data.release;
   const scoreColor =
     hs.label === 'Very High' ? 'text-emerald-400'
       : hs.label === 'High' ? 'text-emerald-400'
@@ -821,6 +829,24 @@ function VitalsBanner({
                   <span className={`font-semibold ${scoreColor}`}>{hs.score}/100</span>
                   <span className="text-zinc-500">— {hs.activity}</span>
                 </span>
+                {release ? (
+                  <a
+                    href={release.html_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    title="Latest release"
+                    className="flex items-center gap-1.5 rounded-full border border-zinc-700 bg-zinc-900 px-2.5 py-0.5 text-[11px] font-medium text-zinc-300 transition hover:border-zinc-600 hover:bg-zinc-800"
+                  >
+                    <Tag className="h-3 w-3 text-indigo-400" />
+                    {release.tag_name}
+                    <span className="text-zinc-500">· {timeAgo(release.published_at)}</span>
+                  </a>
+                ) : (
+                  <span className="flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900 px-2.5 py-0.5 text-[11px] font-medium text-zinc-400">
+                    <GitBranch className="h-3 w-3" />
+                    {repo.default_branch}
+                  </span>
+                )}
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <button
@@ -870,7 +896,7 @@ function VitalsBanner({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 w-full p-6 pt-0 border-t border-zinc-800/50">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 w-full p-6 border-t border-zinc-800/50">
         {vitals.map((v) => (
           <div key={v.label} className="flex flex-col p-4 rounded-xl border border-transparent hover:border-white/5 hover:bg-white/[0.02] transition-all duration-200">
             <div className="flex items-center gap-1.5 text-sm text-zinc-400 font-medium mb-1.5">
@@ -1176,23 +1202,23 @@ function CommunityStandardsCard({ community }: { community: CommunityProfile | n
           </div>
 
           {/* Checklist grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 w-full">
             {items.map((item) => {
               const present = item.ok === true;
               return (
                 <div
                   key={item.label}
                   className={present
-                    ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-medium rounded-lg p-3 flex items-center gap-2 text-sm'
-                    : 'bg-zinc-900/40 border border-zinc-800/40 text-zinc-500 rounded-lg p-3 flex items-center gap-2 text-sm opacity-60'
+                    ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 rounded-lg p-3 flex items-center gap-2 text-sm'
+                    : 'bg-zinc-900/50 border border-zinc-800/60 text-zinc-400 rounded-lg p-3 flex items-center gap-2 text-sm'
                   }
                 >
                   {present ? (
-                    <Check className="h-4 w-4 shrink-0" />
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
                   ) : (
-                    <X className="h-4 w-4 shrink-0" />
+                    <XCircle className="h-4 w-4 shrink-0 text-zinc-500" />
                   )}
-                  <span className="truncate">{item.label}</span>
+                  <span>{item.label}</span>
                 </div>
               );
             })}
