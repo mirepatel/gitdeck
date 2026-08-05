@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { fetchRepoData, parseRepoInput, getStoredToken, setStoredToken } from './github';
-import type { FetchResult, RepoData, CommunityProfile, IssueItem } from './types';
+import type { FetchResult, RepoData, CommunityProfile } from './types';
 import type { User } from '@supabase/supabase-js';
 import {
   formatNumber, timeAgo, commitTimeline, authorDistribution,
@@ -604,25 +604,24 @@ function Header({
 
           {/* Right Column — Controls */}
           <div className="flex justify-end items-center gap-2 sm:gap-4">
-            {/* Rate limit pill */}
+            {/* Rate limit pill — clickable to open API token settings */}
             {rateLimit && (
-              <div className="flex h-9 items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-2.5 text-[11px] text-zinc-500">
-                <Gauge className="h-3.5 w-3.5" />
+              <button
+                onClick={onOpenSettings}
+                title="Click to set PAT & expand quota to 5,000 req/hr"
+                className={`relative flex h-9 items-center gap-1.5 rounded-xl border px-2.5 text-[11px] transition-colors hover:bg-zinc-800 cursor-pointer ${
+                  hasToken
+                    ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-400'
+                    : 'border-zinc-800 bg-zinc-900 text-zinc-500'
+                }`}
+              >
+                <Zap className="h-3.5 w-3.5" />
                 {rateLimit.remaining}/{rateLimit.limit}
-              </div>
+                {hasToken && (
+                  <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-400 ring-2 ring-zinc-950" />
+                )}
+              </button>
             )}
-
-            {/* Settings gear */}
-            <button
-              onClick={onOpenSettings}
-              title="API Configuration"
-              className={`relative grid h-9 w-9 place-items-center rounded-xl border border-zinc-800 bg-zinc-900 transition hover:bg-zinc-800 ${hasToken ? 'text-emerald-400' : 'text-zinc-400'}`}
-            >
-              <Settings className="h-4 w-4" />
-              {hasToken && (
-                <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-400 ring-2 ring-zinc-950" />
-              )}
-            </button>
 
             {/* Auth area */}
             {authLoading ? (
@@ -795,7 +794,7 @@ function VitalsBanner({
       transition={{ duration: 0.35 }}
       className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/50 backdrop-blur-sm"
     >
-      <div className="flex flex-col gap-4 p-5 sm:p-6 lg:flex-row lg:items-start lg:justify-between">
+      <div className="flex flex-col gap-4 p-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex items-start gap-4 min-w-0">
           <img
             src={repo.owner.avatar_url}
@@ -871,7 +870,7 @@ function VitalsBanner({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 w-full px-5 sm:px-6 pb-5 sm:pb-6 pt-4 border-t border-zinc-800/50">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 w-full p-6 pt-0 border-t border-zinc-800/50">
         {vitals.map((v) => (
           <div key={v.label} className="flex flex-col p-4 rounded-xl border border-transparent hover:border-white/5 hover:bg-white/[0.02] transition-all duration-200">
             <div className="flex items-center gap-1.5 text-sm text-zinc-400 font-medium mb-1.5">
@@ -896,7 +895,7 @@ function TabBar({
   setActiveTab: (t: TabId) => void;
 }) {
   return (
-    <div className="mt-6 flex w-full justify-start overflow-x-auto no-scrollbar">
+    <div className="flex w-full justify-start overflow-x-auto no-scrollbar">
       <div className="inline-flex gap-1 whitespace-nowrap rounded-lg border border-zinc-800 bg-zinc-900/50 p-1">
         {TABS.map((t) => {
           const active = t.id === activeTab;
@@ -1102,7 +1101,7 @@ function IssuesTab({ data }: { data: FetchResult }) {
 
       <CommunityStandardsCard community={data.community} />
 
-      <GoodFirstIssuesCard issues={data.issues} repoFullName={data.repo?.full_name ?? ''} />
+      <ExecutiveHealthInsightsCard data={data} />
     </div>
   );
 }
@@ -1177,24 +1176,23 @@ function CommunityStandardsCard({ community }: { community: CommunityProfile | n
           </div>
 
           {/* Checklist grid */}
-          <div className="grid flex-1 grid-cols-2 gap-2 sm:grid-cols-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full">
             {items.map((item) => {
               const present = item.ok === true;
               return (
                 <div
                   key={item.label}
-                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition ${
-                    present
-                      ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                      : 'bg-zinc-900/30 text-zinc-600 border border-zinc-800/50 opacity-50'
-                  }`}
+                  className={present
+                    ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-medium rounded-lg p-3 flex items-center gap-2 text-sm'
+                    : 'bg-zinc-900/40 border border-zinc-800/40 text-zinc-500 rounded-lg p-3 flex items-center gap-2 text-sm opacity-60'
+                  }
                 >
                   {present ? (
-                    <Check className="h-4 w-4 shrink-0 text-emerald-400" />
+                    <Check className="h-4 w-4 shrink-0" />
                   ) : (
-                    <X className="h-4 w-4 shrink-0 text-zinc-600" />
+                    <X className="h-4 w-4 shrink-0" />
                   )}
-                  <span className="truncate font-medium">{item.label}</span>
+                  <span className="truncate">{item.label}</span>
                 </div>
               );
             })}
@@ -1205,84 +1203,101 @@ function CommunityStandardsCard({ community }: { community: CommunityProfile | n
   );
 }
 
-/* ---------- Good First Issues Card ---------- */
-function GoodFirstIssuesCard({ issues, repoFullName }: { issues: IssueItem[]; repoFullName: string }) {
-  const goodIssues = useMemo(() => {
-    return issues
-      .filter(
-        (issue) =>
-          issue.state === 'open' &&
-          !issue.pull_request &&
-          issue.labels.some(
-            (l) =>
-              l.name.toLowerCase() === 'good first issue' ||
-              l.name.toLowerCase() === 'help wanted'
-          )
-      )
-      .slice(0, 5);
-  }, [issues]);
+/* ---------- Executive Health Insights Card ---------- */
+function ExecutiveHealthInsightsCard({ data }: { data: FetchResult }) {
+  const insights = useMemo(() => {
+    const hs = healthScore(data.commits, data.issues);
+    const bf = data.contributors.length > 0 ? busFactor(data.contributors) : null;
+    const stats = data.issues.length > 0 ? issueStats(data.issues) : null;
+    const recentCommitCount = data.commits.length;
+    const topSharePct = bf ? (bf.topShare * 100).toFixed(0) : '0';
+
+    const velocityLevel =
+      recentCommitCount >= 100 ? 'High'
+        : recentCommitCount >= 30 ? 'Moderate'
+        : recentCommitCount > 0 ? 'Low'
+        : 'Stale';
+    const velocityDetail =
+      recentCommitCount > 0
+        ? `${recentCommitCount} recent commit${recentCommitCount !== 1 ? 's' : ''}`
+        : 'No recent commits detected';
+
+    const busLevel =
+      !bf ? 'Unknown'
+        : bf.label === 'Critical' || bf.label === 'High' ? 'High Risk'
+        : bf.label === 'Moderate' ? 'Moderate Risk'
+        : 'Low Risk';
+    const busDetail = bf
+      ? `Top author holds ${topSharePct}% of commits`
+      : 'No contributor data available';
+
+    const issueLevel =
+      !stats ? 'Unknown'
+        : stats.avgAgeOpen <= 7 ? 'Fast'
+        : stats.avgAgeOpen <= 30 ? 'Moderate'
+        : 'Slow';
+    const issueDetail =
+      stats && stats.openIssues.length > 0
+        ? `${stats.openIssues.length} open, avg age ${stats.avgAgeOpen}d`
+        : stats
+          ? 'No open issues remaining'
+          : 'No issue data available';
+
+    return [
+      {
+        icon: Zap,
+        label: 'Maintenance Velocity',
+        level: velocityLevel,
+        detail: velocityDetail,
+        color: velocityLevel === 'High' ? 'text-emerald-400'
+          : velocityLevel === 'Moderate' ? 'text-amber-400'
+          : 'text-rose-400',
+      },
+      {
+        icon: ShieldAlert,
+        label: 'Bus Factor',
+        level: busLevel,
+        detail: busDetail,
+        color: busLevel === 'Low Risk' ? 'text-emerald-400'
+          : busLevel === 'Moderate Risk' ? 'text-amber-400'
+          : 'text-rose-400',
+      },
+      {
+        icon: Clock,
+        label: 'Issue Resolution',
+        level: issueLevel,
+        detail: issueDetail,
+        color: issueLevel === 'Fast' ? 'text-emerald-400'
+          : issueLevel === 'Moderate' ? 'text-amber-400'
+          : 'text-rose-400',
+      },
+    ];
+  }, [data]);
 
   return (
-    <Card title="Good First Issues" icon={Sparkles} className="lg:col-span-2">
-      {goodIssues.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-8 text-center">
-          <Sparkles className="h-7 w-7 text-zinc-700" />
-          <p className="mt-3 text-sm text-zinc-500">
-            No open issues labeled “good first issue” or “help wanted” right now.
-          </p>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {goodIssues.map((issue, i) => (
-            <motion.a
-              key={issue.id}
-              href={`https://github.com/${repoFullName}/issues/${issue.number}`}
-              target="_blank"
-              rel="noreferrer"
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.05 }}
-              className="group flex items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 transition hover:border-indigo-500/30 hover:bg-zinc-900"
-            >
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-indigo-500/20 bg-indigo-500/10">
-                <Sparkles className="h-4 w-4 text-indigo-400" />
+    <Card title="Executive Health Insights" icon={Sparkles} className="lg:col-span-2">
+      <div className="flex flex-col gap-3">
+        {insights.map((insight, i) => (
+          <motion.div
+            key={insight.label}
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: i * 0.08 }}
+            className="flex items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3"
+          >
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-zinc-700/50 bg-zinc-800/50">
+              <insight.icon className={`h-4 w-4 ${insight.color}`} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-baseline gap-2">
+                <span className="text-sm font-medium text-zinc-200">{insight.label}</span>
+                <span className={`text-xs font-semibold ${insight.color}`}>{insight.level}</span>
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-zinc-200 group-hover:text-white">
-                  {issue.title}
-                </p>
-                <div className="mt-0.5 flex items-center gap-2 text-[11px] text-zinc-500">
-                  <span>#{issue.number}</span>
-                  <span>·</span>
-                  <span>@{issue.user.login}</span>
-                  {issue.comments > 0 && (
-                    <>
-                      <span>·</span>
-                      <span>{issue.comments} comment{issue.comments !== 1 ? 's' : ''}</span>
-                    </>
-                  )}
-                </div>
-              </div>
-              <div className="flex shrink-0 items-center gap-1.5">
-                {issue.labels.slice(0, 2).map((label) => (
-                  <span
-                    key={label.name}
-                    className="rounded-full px-2 py-0.5 text-[10px] font-medium"
-                    style={{
-                      backgroundColor: `#${label.color}22`,
-                      color: `#${label.color}`,
-                      border: `1px solid #${label.color}44`,
-                    }}
-                  >
-                    {label.name}
-                  </span>
-                ))}
-                <ExternalLink className="h-3.5 w-3.5 text-zinc-600 transition group-hover:text-indigo-400" />
-              </div>
-            </motion.a>
-          ))}
-        </div>
-      )}
+              <p className="mt-0.5 text-[11px] text-zinc-500">{insight.detail}</p>
+            </div>
+          </motion.div>
+        ))}
+      </div>
     </Card>
   );
 }
@@ -1421,7 +1436,7 @@ function LanguagesTab({ data }: { data: FetchResult }) {
   }));
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <Card title="Language Distribution" icon={Code2}>
         <div className="h-72 w-full">
           <ResponsiveContainer width="100%" height="100%">
@@ -1469,7 +1484,7 @@ function LanguagesTab({ data }: { data: FetchResult }) {
         </div>
       </Card>
 
-      <DependenciesCard deps={data.dependencies} />
+      <DependenciesCard deps={data.dependencies} className="lg:col-span-2" />
 
       <Card className="lg:col-span-2">
         <div className="flex h-4 w-full overflow-hidden rounded-full border border-zinc-800">
@@ -1492,7 +1507,7 @@ function LanguagesTab({ data }: { data: FetchResult }) {
 }
 
 /* ---------- Dependencies Card ---------- */
-function DependenciesCard({ deps }: { deps: FetchResult['dependencies'] }) {
+function DependenciesCard({ deps, className = '' }: { deps: FetchResult['dependencies']; className?: string }) {
   const depEntries = useMemo(
     () => Object.entries(deps?.dependencies ?? {}),
     [deps]
@@ -1504,7 +1519,7 @@ function DependenciesCard({ deps }: { deps: FetchResult['dependencies'] }) {
 
   if (!deps?.hasPackageJson) {
     return (
-      <Card title="Core Dependencies" icon={Package}>
+      <Card title="Core Dependencies" icon={Package} className={className}>
         <div className="flex flex-col items-center justify-center py-10 text-center">
           <Package className="h-8 w-8 text-zinc-700" />
           <p className="mt-3 text-sm text-zinc-500">
@@ -1516,7 +1531,7 @@ function DependenciesCard({ deps }: { deps: FetchResult['dependencies'] }) {
   }
 
   return (
-    <Card title="Core Dependencies" icon={Package}>
+    <Card title="Core Dependencies" icon={Package} className={className}>
       <div className="space-y-4">
         {depEntries.length > 0 && (
           <div>
