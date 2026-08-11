@@ -1,4 +1,4 @@
-# 🌿 GitDeck
+# 🌿 Gitdeck
 
 ### Design × Development
 
