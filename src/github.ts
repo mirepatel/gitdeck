@@ -110,3 +110,37 @@ export async function fetchRepoData(
     };
   }
 }
+
+// Fetches punch card data (day-of-week × hour commit density) from the edge function.
+// Returns a 7×24 grid of [day, hour, count] tuples, or empty array on failure.
+export async function fetchPunchCard(
+  owner: string,
+  repo: string
+): Promise<{ punchCard: number[][]; error: string | null }> {
+  try {
+    const token = getStoredToken();
+    const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/github-proxy`;
+    const params = new URLSearchParams({
+      action: 'punch_card',
+      owner,
+      repo,
+    });
+    if (token) params.set('token', token);
+
+    const res = await fetch(`${apiUrl}?${params.toString()}`, {
+      headers: {
+        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!res.ok) {
+      return { punchCard: [], error: `Server error (${res.status}).` };
+    }
+
+    const body = await res.json();
+    return { punchCard: body.punchCard ?? [], error: null };
+  } catch {
+    return { punchCard: [], error: 'Network error fetching punch card data.' };
+  }
+}

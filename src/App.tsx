@@ -15,7 +15,7 @@ import {
   XCircle, Tag, GitBranch,
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
-import { fetchRepoData, parseRepoInput, getStoredToken, setStoredToken } from './github';
+import { fetchRepoData, fetchPunchCard, parseRepoInput, getStoredToken, setStoredToken } from './github';
 import type { FetchResult, RepoData, CommunityProfile } from './types';
 import type { User } from '@supabase/supabase-js';
 import {
@@ -974,6 +974,8 @@ function VelocityTab({ data }: { data: FetchResult }) {
   }
 
   const repo = data.repo;
+  const owner = repo.owner.login;
+  const repoName = repo.name;
 
   const authorChartData = authors.map((a) => ({
     name: a.login, value: a.count, avatar: a.avatar,
@@ -1004,6 +1006,8 @@ function VelocityTab({ data }: { data: FetchResult }) {
           </ResponsiveContainer>
         </div>
       </Card>
+
+      <PunchCardHeatmap owner={owner} repo={repoName} className="lg:col-span-2" />
 
       <Card title="Top Authors" icon={Users}>
         <div className="h-64 w-full">
@@ -1060,6 +1064,174 @@ function VelocityTab({ data }: { data: FetchResult }) {
         </div>
       </Card>
     </div>
+  );
+}
+
+/* ---------- Punch Card / Activity Heatmap ---------- */
+const PUNCH_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+function PunchCardHeatmap({ owner, repo, className = '' }: { owner: string; repo: string; className?: string }) {
+  const [punchCard, setPunchCard] = useState<number[][]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [hovered, setHovered] = useState<{ day: number; hour: number; count: number } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    fetchPunchCard(owner, repo).then((result) => {
+      if (cancelled) return;
+      setPunchCard(result.punchCard);
+      setError(result.error);
+      setLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [owner, repo]);
+
+  // Build a 7×24 grid from the punch card data
+  const grid = useMemo(() => {
+    const g: number[][] = Array.from({ length: 7 }, () => Array(24).fill(0));
+    punchCard.forEach(([day, hour, count]) => {
+      if (day >= 0 && day < 7 && hour >= 0 && hour < 24) {
+        g[day][hour] = count;
+      }
+    });
+    return g;
+  }, [punchCard]);
+
+  const maxCount = useMemo(
+    () => Math.max(1, ...grid.flat()),
+    [grid]
+  );
+
+  const totalCommits = useMemo(
+    () => grid.flat().reduce((s, v) => s + v, 0),
+    [grid]
+  );
+
+  const opacityFor = (count: number) => {
+    if (count === 0) return 0;
+    return Math.max(0.12, Math.min(1, count / maxCount));
+  };
+
+  // Find peak day/hour
+  const peak = useMemo(() => {
+    let best = { day: 0, hour: 0, count: 0 };
+    grid.forEach((row, d) => row.forEach((c, h) => {
+      if (c > best.count) best = { day: d, hour: h, count: c };
+    }));
+    return best;
+  }, [grid]);
+
+  return (
+    <Card title="Activity Heatmap" icon={Gauge} className={className}>
+      {loading ? (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-5 w-5 animate-spin text-indigo-400" />
+        </div>
+      ) : totalCommits === 0 ? (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <Gauge className="h-8 w-8 text-zinc-700" />
+          <p className="mt-3 text-sm text-zinc-500">
+            Not enough activity data to generate heatmap.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {/* Legend */}
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <p className="text-[11px] text-zinc-500">
+              {totalCommits.toLocaleString()} commits · Peak: {PUNCH_DAYS[peak.day]} {peak.hour}:00 ({peak.count} commits)
+            </p>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-zinc-600">Less</span>
+              {[0.12, 0.3, 0.5, 0.7, 1].map((o) => (
+                <span
+                  key={o}
+                  className="h-2.5 w-2.5 rounded-[3px] bg-indigo-500"
+                  style={{ opacity: o }}
+                />
+              ))}
+              <span className="text-[10px] text-zinc-600">More</span>
+            </div>
+          </div>
+
+          {/* Heatmap grid */}
+          <div className="overflow-x-auto no-scrollbar">
+            <div className="min-w-[640px]">
+              {/* Hour labels (top) */}
+              <div className="flex pl-10">
+                {Array.from({ length: 24 }).map((_, h) => (
+                  <div
+                    key={h}
+                    className="flex-1 text-center text-[9px] text-zinc-600"
+                  >
+                    {h % 3 === 0 ? `${h}` : ''}
+                  </div>
+                ))}
+              </div>
+
+              {/* Day rows */}
+              {grid.map((row, day) => (
+                <div key={day} className="flex items-center">
+                  <div className="w-10 shrink-0 text-[10px] font-medium text-zinc-500 text-right pr-2">
+                    {PUNCH_DAYS[day]}
+                  </div>
+                  <div className="flex flex-1 gap-[2px]">
+                    {row.map((count, hour) => {
+                      const op = opacityFor(count);
+                      const isHovered = hovered?.day === day && hovered?.hour === hour;
+                      return (
+                        <div
+                          key={hour}
+                          className="relative flex-1 aspect-square group/cell"
+                          onMouseEnter={() => setHovered({ day, hour, count })}
+                          onMouseLeave={() => setHovered(null)}
+                        >
+                          <div
+                            className={`absolute inset-0 rounded-[3px] transition-all duration-150 ${
+                              isHovered ? 'ring-2 ring-indigo-300/60 scale-110 z-10' : ''
+                            }`}
+                            style={{
+                              backgroundColor: count > 0 ? `rgba(99, 102, 241, ${op})` : 'rgba(39, 39, 42, 0.5)',
+                            }}
+                          />
+                          {/* Tooltip on hover */}
+                          {isHovered && (
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 z-20 whitespace-nowrap rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1 text-[10px] text-zinc-200 pointer-events-none shadow-xl">
+                              {PUNCH_DAYS[day]} {hour}:00 — {count} commit{count !== 1 ? 's' : ''}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+
+              {/* Hour labels (bottom) */}
+              <div className="flex pl-10 mt-1">
+                {Array.from({ length: 24 }).map((_, h) => (
+                  <div
+                    key={h}
+                    className="flex-1 text-center text-[9px] text-zinc-600"
+                  >
+                    {h % 6 === 0 && h > 0 ? `${h}:00` : ''}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {error && (
+            <p className="text-[10px] text-zinc-600">
+              Some data may be incomplete — {error}
+            </p>
+          )}
+        </div>
+      )}
+    </Card>
   );
 }
 
@@ -1640,13 +1812,12 @@ function AuthModal({
   onClose: () => void;
   onAuthed: () => void;
 }) {
-  const { signIn, signUp, signInWithOAuth } = useAuth();
+  const { signIn, signUp } = useAuth();
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [oauthLoading, setOauthLoading] = useState<'google' | 'github' | null>(null);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1659,16 +1830,6 @@ function AuthModal({
       setError(result.error);
     } else {
       onAuthed();
-    }
-  };
-
-  const handleOAuth = async (provider: 'google' | 'github') => {
-    setError(null);
-    setOauthLoading(provider);
-    const result = await signInWithOAuth(provider);
-    setOauthLoading(null);
-    if (result.error) {
-      setError(result.error);
     }
   };
 
@@ -1700,48 +1861,6 @@ function AuthModal({
         </div>
 
         <div className="p-4 space-y-4">
-          {/* OAuth provider buttons */}
-          <div className="space-y-2">
-            <button
-              type="button"
-              onClick={() => handleOAuth('google')}
-              disabled={!!oauthLoading}
-              className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-zinc-700 bg-zinc-950 py-2.5 text-sm font-medium text-zinc-100 transition hover:bg-zinc-800 disabled:opacity-50"
-            >
-              {oauthLoading === 'google' ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" />
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                </svg>
-              )}
-              Continue with Google
-            </button>
-            <button
-              type="button"
-              onClick={() => handleOAuth('github')}
-              disabled={!!oauthLoading}
-              className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-zinc-700 bg-zinc-950 py-2.5 text-sm font-medium text-zinc-100 transition hover:bg-zinc-800 disabled:opacity-50"
-            >
-              {oauthLoading === 'github' ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Github className="h-4 w-4" />
-              )}
-              Continue with GitHub
-            </button>
-          </div>
-
-          {/* Divider */}
-          <div className="relative flex items-center py-1">
-            <div className="flex-grow border-t border-zinc-800" />
-            <span className="mx-3 text-[11px] uppercase tracking-wider text-zinc-600">or</span>
-            <div className="flex-grow border-t border-zinc-800" />
-          </div>
-
           {/* Email/password form */}
           <form onSubmit={submit} className="space-y-3">
             <div className="space-y-1.5">

@@ -1,0 +1,5 @@
+[functions.github-proxy]
+verify_jwt = false
+
+[functions.gitdeck-audits]
+verify_jwt = true

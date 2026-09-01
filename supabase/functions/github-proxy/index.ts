@@ -168,6 +168,69 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // GET /functions/v1/github-proxy?action=punch_card&owner=facebook&repo=react
+    if (action === "punch_card") {
+      const owner = url.searchParams.get("owner");
+      const repo = url.searchParams.get("repo");
+      if (!owner || !repo) {
+        return new Response(
+          JSON.stringify({ error: "Missing owner or repo parameters." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const clientToken = url.searchParams.get("token");
+      const envToken = Deno.env.get("GITHUB_TOKEN") ?? null;
+      const token = clientToken || envToken;
+
+      // GitHub punch card returns [dayOfWeek, hour, commitCount] tuples
+      const punch = await ghFetch<number[][]>(
+        `/repos/${owner}/${repo}/stats/punch_card`,
+        token
+      );
+
+      // If stats endpoint returns 202 (generating) or empty, fall back to
+      // aggregating commit timestamps by day-of-week and hour.
+      let punchData = punch.data;
+      let lastRateLimit = punch.rateLimit;
+
+      if (!punchData || punchData.length === 0) {
+        const commitsRes = await ghFetch<Array<{ commit: { author: { date: string } } }>>(
+          `/repos/${owner}/${repo}/commits?per_page=100`,
+          token
+        );
+        lastRateLimit = commitsRes.rateLimit ?? punch.rateLimit;
+        const commits = commitsRes.data ?? [];
+        if (commits.length > 0) {
+          const grid: number[][] = [];
+          for (let d = 0; d < 7; d++) {
+            for (let h = 0; h < 24; h++) {
+              grid.push([d, h, 0]);
+            }
+          }
+          const lookup = new Map<string, number>();
+          grid.forEach((cell, i) => lookup.set(`${cell[0]}-${cell[1]}`, i));
+
+          commits.forEach((c) => {
+            const date = new Date(c.commit.author.date);
+            const day = date.getDay();
+            const hour = date.getHours();
+            const idx = lookup.get(`${day}-${hour}`);
+            if (idx !== undefined) grid[idx][2]++;
+          });
+          punchData = grid;
+        }
+      }
+
+      return new Response(
+        JSON.stringify({
+          punchCard: punchData ?? [],
+          rateLimit: lastRateLimit,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     return new Response(
       JSON.stringify({ error: `Unknown action: ${action}` }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
