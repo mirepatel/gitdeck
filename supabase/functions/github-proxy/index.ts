@@ -231,6 +231,37 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // GET /functions/v1/github-proxy?action=code_frequency&owner=facebook&repo=react
+    if (action === "code_frequency") {
+      const owner = url.searchParams.get("owner");
+      const repo = url.searchParams.get("repo");
+      if (!owner || !repo) {
+        return new Response(
+          JSON.stringify({ error: "Missing owner or repo parameters." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const clientToken = url.searchParams.get("token");
+      const envToken = Deno.env.get("GITHUB_TOKEN") ?? null;
+      const token = clientToken || envToken;
+
+      // GitHub code_frequency returns [timestamp, additions, deletions] weekly tuples.
+      // deletions are negative numbers. The endpoint may return 202 while generating.
+      const freq = await ghFetch<number[][]>(
+        `/repos/${owner}/${repo}/stats/code_frequency`,
+        token
+      );
+
+      return new Response(
+        JSON.stringify({
+          codeFrequency: freq.data ?? [],
+          rateLimit: freq.rateLimit,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     return new Response(
       JSON.stringify({ error: `Unknown action: ${action}` }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }

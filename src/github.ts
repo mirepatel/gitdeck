@@ -144,3 +144,37 @@ export async function fetchPunchCard(
     return { punchCard: [], error: 'Network error fetching punch card data.' };
   }
 }
+
+// Fetches weekly code frequency data [timestamp, additions, deletions] from the edge function.
+// Returns an array of weekly tuples, or empty array on failure.
+export async function fetchCodeFrequency(
+  owner: string,
+  repo: string
+): Promise<{ codeFrequency: number[][]; error: string | null }> {
+  try {
+    const token = getStoredToken();
+    const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/github-proxy`;
+    const params = new URLSearchParams({
+      action: 'code_frequency',
+      owner,
+      repo,
+    });
+    if (token) params.set('token', token);
+
+    const res = await fetch(`${apiUrl}?${params.toString()}`, {
+      headers: {
+        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!res.ok) {
+      return { codeFrequency: [], error: `Server error (${res.status}).` };
+    }
+
+    const body = await res.json();
+    return { codeFrequency: body.codeFrequency ?? [], error: null };
+  } catch {
+    return { codeFrequency: [], error: 'Network error fetching code frequency data.' };
+  }
+}

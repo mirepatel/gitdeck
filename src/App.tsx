@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, PieChart, Pie, Cell, Legend,
+  ResponsiveContainer, PieChart, Pie, Cell, Legend, ComposedChart, ReferenceLine,
 } from 'recharts';
 import {
   Star, GitFork, AlertCircle, Scale, Code2, Eye, Search, Activity,
@@ -15,7 +15,7 @@ import {
   XCircle, Tag, GitBranch,
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
-import { fetchRepoData, fetchPunchCard, parseRepoInput, getStoredToken, setStoredToken } from './github';
+import { fetchRepoData, fetchPunchCard, fetchCodeFrequency, parseRepoInput, getStoredToken, setStoredToken } from './github';
 import type { FetchResult, RepoData, CommunityProfile } from './types';
 import type { User } from '@supabase/supabase-js';
 import {
@@ -943,9 +943,10 @@ function VitalsBanner({
 
 /* ---------- Card ---------- */
 function Card({
-  title, icon: Icon, children, className = '',
+  title, subtitle, icon: Icon, children, className = '',
 }: {
   title?: string;
+  subtitle?: string;
   icon?: React.ComponentType<{ className?: string }>;
   children: React.ReactNode;
   className?: string;
@@ -955,7 +956,10 @@ function Card({
       {title && (
         <div className="mb-4 flex items-center gap-2">
           {Icon && <Icon className="h-4 w-4 text-zinc-300" />}
-          <h3 className="text-sm font-semibold text-zinc-100">{title}</h3>
+          <div>
+            <h3 className="text-sm font-semibold text-zinc-100">{title}</h3>
+            {subtitle && <p className="text-xs text-zinc-500 mt-0.5">{subtitle}</p>}
+          </div>
         </div>
       )}
       {children}
@@ -1008,6 +1012,8 @@ function VelocityTab({ data }: { data: FetchResult }) {
       </Card>
 
       <PunchCardHeatmap owner={owner} repo={repoName} className="lg:col-span-2" />
+
+      <CodeChurnChart owner={owner} repo={repoName} className="lg:col-span-2" />
 
       <Card title="Top Authors" icon={Users}>
         <div className="h-64 w-full">
@@ -1069,6 +1075,19 @@ function VelocityTab({ data }: { data: FetchResult }) {
 
 /* ---------- Punch Card / Activity Heatmap ---------- */
 const PUNCH_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const PUNCH_DAYS_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+function formatHourLabel(h: number): string {
+  if (h === 0) return '12 AM';
+  if (h === 12) return '12 PM';
+  if (h < 12) return `${h} AM`;
+  return `${h - 12} PM`;
+}
+
+function formatHourShort(h: number): string {
+  if (h % 6 !== 0) return '';
+  return formatHourLabel(h);
+}
 
 function PunchCardHeatmap({ owner, repo, className = '' }: { owner: string; repo: string; className?: string }) {
   const [punchCard, setPunchCard] = useState<number[][]>([]);
@@ -1125,7 +1144,7 @@ function PunchCardHeatmap({ owner, repo, className = '' }: { owner: string; repo
   }, [grid]);
 
   return (
-    <Card title="Activity Heatmap" icon={Gauge} className={className}>
+    <Card title="Activity Heatmap" subtitle="Historical commit frequency by day and time." icon={Gauge} className={className}>
       {loading ? (
         <div className="flex items-center justify-center py-16">
           <Loader2 className="h-5 w-5 animate-spin text-indigo-400" />
@@ -1142,14 +1161,14 @@ function PunchCardHeatmap({ owner, repo, className = '' }: { owner: string; repo
           {/* Legend */}
           <div className="flex items-center justify-between flex-wrap gap-2">
             <p className="text-[11px] text-zinc-500">
-              {totalCommits.toLocaleString()} commits · Peak: {PUNCH_DAYS[peak.day]} {peak.hour}:00 ({peak.count} commits)
+              {totalCommits.toLocaleString()} commits · Peak: {PUNCH_DAYS_FULL[peak.day]} at {formatHourLabel(peak.hour)} ({peak.count} commits)
             </p>
             <div className="flex items-center gap-1.5">
               <span className="text-[10px] text-zinc-600">Less</span>
               {[0.12, 0.3, 0.5, 0.7, 1].map((o) => (
                 <span
                   key={o}
-                  className="h-2.5 w-2.5 rounded-[3px] bg-indigo-500"
+                  className="h-2.5 w-2.5 rounded-[2px] bg-indigo-500"
                   style={{ opacity: o }}
                 />
               ))}
@@ -1165,16 +1184,16 @@ function PunchCardHeatmap({ owner, repo, className = '' }: { owner: string; repo
                 {Array.from({ length: 24 }).map((_, h) => (
                   <div
                     key={h}
-                    className="flex-1 text-center text-[9px] text-zinc-600"
+                    className="flex-1 text-center text-[10px] text-zinc-500 font-medium"
                   >
-                    {h % 3 === 0 ? `${h}` : ''}
+                    {h % 6 === 0 ? formatHourLabel(h) : ''}
                   </div>
                 ))}
               </div>
 
               {/* Day rows */}
               {grid.map((row, day) => (
-                <div key={day} className="flex items-center">
+                <div key={day} className="flex items-center mt-[2px]">
                   <div className="w-10 shrink-0 text-[10px] font-medium text-zinc-500 text-right pr-2">
                     {PUNCH_DAYS[day]}
                   </div>
@@ -1190,17 +1209,19 @@ function PunchCardHeatmap({ owner, repo, className = '' }: { owner: string; repo
                           onMouseLeave={() => setHovered(null)}
                         >
                           <div
-                            className={`absolute inset-0 rounded-[3px] transition-all duration-150 ${
+                            className={`absolute inset-0 rounded-[2px] transition-all duration-150 ${
                               isHovered ? 'ring-2 ring-indigo-300/60 scale-110 z-10' : ''
-                            }`}
+                            } ${count === 0 ? 'bg-zinc-800/30' : ''}`}
                             style={{
-                              backgroundColor: count > 0 ? `rgba(99, 102, 241, ${op})` : 'rgba(39, 39, 42, 0.5)',
+                              backgroundColor: count > 0 ? `rgba(99, 102, 241, ${op})` : undefined,
                             }}
                           />
                           {/* Tooltip on hover */}
                           {isHovered && (
-                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 z-20 whitespace-nowrap rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1 text-[10px] text-zinc-200 pointer-events-none shadow-xl">
-                              {PUNCH_DAYS[day]} {hour}:00 — {count} commit{count !== 1 ? 's' : ''}
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 z-20 whitespace-nowrap rounded-lg bg-zinc-900 border border-zinc-800 shadow-xl px-2.5 py-1.5 text-[11px] text-zinc-200 pointer-events-none">
+                              <span className="text-zinc-100">{PUNCH_DAYS_FULL[day]} at {formatHourLabel(hour)}</span>
+                              <span className="text-zinc-500 mx-1">•</span>
+                              <span className="text-indigo-400 font-medium">{count} commit{count !== 1 ? 's' : ''}</span>
                             </div>
                           )}
                         </div>
@@ -1211,13 +1232,13 @@ function PunchCardHeatmap({ owner, repo, className = '' }: { owner: string; repo
               ))}
 
               {/* Hour labels (bottom) */}
-              <div className="flex pl-10 mt-1">
+              <div className="flex pl-10 mt-1.5">
                 {Array.from({ length: 24 }).map((_, h) => (
                   <div
                     key={h}
-                    className="flex-1 text-center text-[9px] text-zinc-600"
+                    className="flex-1 text-center text-[10px] text-zinc-500 font-medium"
                   >
-                    {h % 6 === 0 && h > 0 ? `${h}:00` : ''}
+                    {formatHourShort(h)}
                   </div>
                 ))}
               </div>
@@ -1231,6 +1252,160 @@ function PunchCardHeatmap({ owner, repo, className = '' }: { owner: string; repo
           )}
         </div>
       )}
+    </Card>
+  );
+}
+
+/* ---------- Code Churn Chart ---------- */
+function formatChurnNumber(n: number): string {
+  const abs = Math.abs(n);
+  const sign = n > 0 ? '+' : n < 0 ? '-' : '';
+  if (abs >= 1000) return `${sign}${(abs / 1000).toFixed(1).replace(/\.0$/, '')}k`;
+  return `${sign}${abs}`;
+}
+
+function CodeChurnChart({ owner, repo, className = '' }: { owner: string; repo: string; className?: string }) {
+  const [codeFreq, setCodeFreq] = useState<number[][]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    fetchCodeFrequency(owner, repo).then((result) => {
+      if (cancelled) return;
+      setCodeFreq(result.codeFrequency);
+      setError(result.error);
+      setLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [owner, repo]);
+
+  const chartData = useMemo(() => {
+    if (codeFreq.length === 0) return [];
+    // Take last 52 weeks (1 year) to keep the chart readable
+    const recent = codeFreq.slice(-52);
+    return recent.map(([ts, additions, deletions]) => ({
+      ts,
+      date: new Date(ts * 1000).toLocaleDateString('en', { month: 'short', day: 'numeric' }),
+      additions,
+      deletions: Math.abs(deletions),
+      net: additions - Math.abs(deletions),
+    }));
+  }, [codeFreq]);
+
+  const totals = useMemo(() => {
+    const totalAdd = chartData.reduce((s, d) => s + d.additions, 0);
+    const totalDel = chartData.reduce((s, d) => s + d.deletions, 0);
+    return { totalAdd, totalDel, net: totalAdd - totalDel };
+  }, [chartData]);
+
+  if (loading) {
+    return (
+      <Card title="Code Churn" subtitle="Weekly lines added vs. deleted over time." icon={GitCommitHorizontal} className={className}>
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-5 w-5 animate-spin text-indigo-400" />
+        </div>
+      </Card>
+    );
+  }
+
+  if (chartData.length === 0) {
+    return (
+      <Card title="Code Churn" subtitle="Weekly lines added vs. deleted over time." icon={GitCommitHorizontal} className={className}>
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <GitCommitHorizontal className="h-8 w-8 text-zinc-700" />
+          <p className="mt-3 text-sm text-zinc-500">
+            Code churn data is currently unavailable for this repository.
+          </p>
+          <p className="mt-1 text-[11px] text-zinc-600">
+            GitHub may still be generating the statistics. Try again shortly.
+          </p>
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <Card title="Code Churn" subtitle="Weekly lines added vs. deleted over time." icon={GitCommitHorizontal} className={className}>
+      <div className="space-y-3">
+        {/* Summary stats */}
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500/80" />
+            <span className="text-[11px] text-zinc-400">
+              <span className="font-medium text-emerald-400">{formatChurnNumber(totals.totalAdd)}</span> added
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-sm bg-rose-500/80" />
+            <span className="text-[11px] text-zinc-400">
+              <span className="font-medium text-rose-400">{formatChurnNumber(totals.totalDel)}</span> deleted
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] text-zinc-500">Net:</span>
+            <span className={`text-[11px] font-medium ${totals.net >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+              {formatChurnNumber(totals.net)}
+            </span>
+          </div>
+        </div>
+
+        {/* Chart */}
+        <div className="h-64 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={chartData} margin={{ top: 8, right: 12, left: -16, bottom: 0 }}>
+              <defs>
+                <linearGradient id="additionsGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#10b981" stopOpacity={0.9} />
+                  <stop offset="100%" stopColor="#10b981" stopOpacity={0.5} />
+                </linearGradient>
+                <linearGradient id="deletionsGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#f43f5e" stopOpacity={0.5} />
+                  <stop offset="100%" stopColor="#f43f5e" stopOpacity={0.9} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
+              <XAxis
+                dataKey="date"
+                stroke="#52525b"
+                fontSize={10}
+                tickMargin={8}
+                interval="preserveStartEnd"
+                minTickGap={28}
+              />
+              <YAxis
+                stroke="#52525b"
+                fontSize={10}
+                tickFormatter={(v: number) => formatChurnNumber(Math.abs(v))}
+              />
+              <Tooltip
+                contentStyle={TOOLTIP_STYLE}
+                labelStyle={{ color: '#e4e4e7', marginBottom: 4 }}
+                formatter={(value: number, name: string) => {
+                  if (name === 'additions') {
+                    return [formatChurnNumber(value), 'Lines Added'];
+                  }
+                  if (name === 'deletions') {
+                    return [formatChurnNumber(-value), 'Lines Deleted'];
+                  }
+                  return [formatChurnNumber(value), name];
+                }}
+              />
+              <ReferenceLine y={0} stroke="#52525b" strokeDasharray="2 2" />
+              <Bar dataKey="additions" fill="url(#additionsGrad)" radius={[2, 2, 0, 0]} maxBarSize={16} />
+              <Bar dataKey="deletions" fill="url(#deletionsGrad)" radius={[0, 0, 2, 2]} maxBarSize={16} />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+
+        {error && (
+          <p className="text-[10px] text-zinc-600">
+            Some data may be incomplete — {error}
+          </p>
+        )}
+      </div>
     </Card>
   );
 }
