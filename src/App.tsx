@@ -952,10 +952,10 @@ function Card({
   className?: string;
 }) {
   return (
-    <div className={`rounded-2xl border border-zinc-800 bg-zinc-900/50 backdrop-blur-sm p-5 overflow-hidden min-w-0 ${className}`}>
+    <div className={`rounded-2xl border border-zinc-800 bg-zinc-900/50 backdrop-blur-sm p-5 min-w-0 ${className}`}>
       {title && (
-        <div className="mb-4 flex items-center gap-2">
-          {Icon && <Icon className="h-4 w-4 text-zinc-300" />}
+        <div className="mb-4 flex items-start gap-2">
+          {Icon && <Icon className="h-4 w-4 text-zinc-300 mt-0.5 shrink-0" />}
           <div>
             <h3 className="text-sm font-semibold text-zinc-100">{title}</h3>
             {subtitle && <p className="text-xs text-zinc-500 mt-0.5">{subtitle}</p>}
@@ -987,7 +987,7 @@ function VelocityTab({ data }: { data: FetchResult }) {
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <Card title="Commit Timeline" icon={TrendingUp} className="lg:col-span-2">
+      <Card title="Commit Timeline" subtitle="Commit frequency over the recent activity window." icon={TrendingUp} className="lg:col-span-2">
         <div className="h-72 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={timeline} margin={{ top: 8, right: 12, left: -16, bottom: 0 }}>
@@ -1015,7 +1015,7 @@ function VelocityTab({ data }: { data: FetchResult }) {
 
       <CodeChurnChart owner={owner} repo={repoName} className="lg:col-span-2" />
 
-      <Card title="Top Authors" icon={Users}>
+      <Card title="Top Authors" subtitle="Primary code contributors ranked by volume." icon={Users}>
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={authorChartData} layout="vertical" margin={{ left: 20, right: 12 }}>
@@ -1035,7 +1035,7 @@ function VelocityTab({ data }: { data: FetchResult }) {
         </div>
       </Card>
 
-      <Card title="Recent Commits" icon={GitCommitHorizontal}>
+      <Card title="Recent Commits" subtitle="Latest commits pushed to the default branch." icon={GitCommitHorizontal}>
         <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
           {recent.map((c) => {
             const author = c.author?.login ?? c.commit.author.name;
@@ -1078,15 +1078,18 @@ const PUNCH_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const PUNCH_DAYS_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 function formatHourLabel(h: number): string {
-  if (h === 0) return '12 AM';
-  if (h === 12) return '12 PM';
-  if (h < 12) return `${h} AM`;
-  return `${h - 12} PM`;
+  if (h === 0) return '12:00 AM';
+  if (h === 12) return '12:00 PM';
+  if (h < 12) return `${h}:00 AM`;
+  return `${h - 12}:00 PM`;
 }
 
 function formatHourShort(h: number): string {
   if (h % 6 !== 0) return '';
-  return formatHourLabel(h);
+  if (h === 0) return '12 AM';
+  if (h === 12) return '12 PM';
+  if (h < 12) return `${h} AM`;
+  return `${h - 12} PM`;
 }
 
 function PunchCardHeatmap({ owner, repo, className = '' }: { owner: string; repo: string; className?: string }) {
@@ -1177,7 +1180,7 @@ function PunchCardHeatmap({ owner, repo, className = '' }: { owner: string; repo
           </div>
 
           {/* Heatmap grid */}
-          <div className="overflow-x-auto no-scrollbar">
+          <div className="overflow-x-auto overflow-y-visible no-scrollbar">
             <div className="min-w-[640px]">
               {/* Hour labels (top) */}
               <div className="flex pl-10">
@@ -1186,7 +1189,7 @@ function PunchCardHeatmap({ owner, repo, className = '' }: { owner: string; repo
                     key={h}
                     className="flex-1 text-center text-[10px] text-zinc-500 font-medium"
                   >
-                    {h % 6 === 0 ? formatHourLabel(h) : ''}
+                    {h % 6 === 0 ? formatHourShort(h) : ''}
                   </div>
                 ))}
               </div>
@@ -1201,6 +1204,17 @@ function PunchCardHeatmap({ owner, repo, className = '' }: { owner: string; repo
                     {row.map((count, hour) => {
                       const op = opacityFor(count);
                       const isHovered = hovered?.day === day && hovered?.hour === hour;
+                      const isTopRow = day === 0;
+                      const isRightEdge = hour >= 20;
+                      const isLeftEdge = hour <= 3;
+                      const tooltipVerticalClass = isTopRow
+                        ? 'top-full mt-1.5'
+                        : 'bottom-full mb-1.5';
+                      const tooltipHorizontalClass = isRightEdge
+                        ? 'right-0'
+                        : isLeftEdge
+                          ? 'left-0'
+                          : 'left-1/2 -translate-x-1/2';
                       return (
                         <div
                           key={hour}
@@ -1210,7 +1224,7 @@ function PunchCardHeatmap({ owner, repo, className = '' }: { owner: string; repo
                         >
                           <div
                             className={`absolute inset-0 rounded-[2px] transition-all duration-150 ${
-                              isHovered ? 'ring-2 ring-indigo-300/60 scale-110 z-10' : ''
+                              isHovered ? 'ring-2 ring-indigo-300/60 scale-110 z-30' : ''
                             } ${count === 0 ? 'bg-zinc-800/30' : ''}`}
                             style={{
                               backgroundColor: count > 0 ? `rgba(99, 102, 241, ${op})` : undefined,
@@ -1218,7 +1232,7 @@ function PunchCardHeatmap({ owner, repo, className = '' }: { owner: string; repo
                           />
                           {/* Tooltip on hover */}
                           {isHovered && (
-                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 z-20 whitespace-nowrap rounded-lg bg-zinc-900 border border-zinc-800 shadow-xl px-2.5 py-1.5 text-[11px] text-zinc-200 pointer-events-none">
+                            <div className={`absolute ${tooltipVerticalClass} ${tooltipHorizontalClass} z-[100] whitespace-nowrap rounded-lg bg-zinc-900 border border-zinc-800 shadow-xl px-2.5 py-1.5 text-[11px] text-zinc-200 pointer-events-none`}>
                               <span className="text-zinc-100">{PUNCH_DAYS_FULL[day]} at {formatHourLabel(hour)}</span>
                               <span className="text-zinc-500 mx-1">•</span>
                               <span className="text-indigo-400 font-medium">{count} commit{count !== 1 ? 's' : ''}</span>
@@ -1341,7 +1355,7 @@ function CodeChurnChart({ owner, repo, className = '' }: { owner: string; repo: 
           <div className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-sm bg-rose-500/80" />
             <span className="text-[11px] text-zinc-400">
-              <span className="font-medium text-rose-400">{formatChurnNumber(totals.totalDel)}</span> deleted
+              <span className="font-medium text-rose-400">{formatChurnNumber(-totals.totalDel)}</span> deleted
             </span>
           </div>
           <div className="flex items-center gap-1.5">
@@ -1429,7 +1443,7 @@ function IssuesTab({ data }: { data: FetchResult }) {
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <Card title="Issue Distribution" icon={AlertCircle}>
+      <Card title="Issue Distribution" subtitle="Open vs. closed issues across the repository." icon={AlertCircle}>
         <div className="h-56 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
@@ -1445,7 +1459,7 @@ function IssuesTab({ data }: { data: FetchResult }) {
         </div>
       </Card>
 
-      <Card title="Pull Request Breakdown" icon={GitFork}>
+      <Card title="Pull Request Breakdown" subtitle="Open vs. merged/closed pull requests." icon={GitFork}>
         <div className="h-56 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
@@ -1461,7 +1475,7 @@ function IssuesTab({ data }: { data: FetchResult }) {
         </div>
       </Card>
 
-      <Card className="lg:col-span-2">
+      <Card title="Issue Metrics" subtitle="Key resolution and aging indicators." icon={TrendingUp} className="lg:col-span-2">
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <Stat label="Open Issues" value={stats.openIssues.length} icon={AlertCircle} />
           <Stat label="Closed Issues" value={stats.closedIssues.length} icon={CheckCircle2} />
@@ -1516,7 +1530,7 @@ function CommunityStandardsCard({ community }: { community: CommunityProfile | n
   const dashOffset = circumference - (pct / 100) * circumference;
 
   return (
-    <Card title="Community Standards" icon={Heart} className="lg:col-span-2">
+    <Card title="Community Standards" subtitle="Repository health checklist and community profile." icon={Heart} className="lg:col-span-2">
       {!community ? (
         <div className="flex flex-col items-center justify-center py-10 text-center">
           <Heart className="h-8 w-8 text-zinc-700" />
@@ -1646,7 +1660,7 @@ function ExecutiveHealthInsightsCard({ data }: { data: FetchResult }) {
   }, [data]);
 
   return (
-    <Card title="Executive Health Insights" icon={Sparkles} className="lg:col-span-2">
+    <Card title="Executive Health Insights" subtitle="Automated risk assessment across maintenance, ownership, and resolution." icon={Sparkles} className="lg:col-span-2">
       <div className="flex flex-col gap-3">
         {insights.map((insight, i) => (
           <motion.div
@@ -1842,7 +1856,7 @@ function LanguagesTab({ data }: { data: FetchResult }) {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <Card title="Language Distribution" icon={Code2}>
+      <Card title="Language Distribution" subtitle="Proportion of each language by bytes of code." icon={Code2}>
         <div className="h-72 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
@@ -1864,7 +1878,7 @@ function LanguagesTab({ data }: { data: FetchResult }) {
         </div>
       </Card>
 
-      <Card title="Breakdown" icon={FileCode2}>
+      <Card title="Breakdown" subtitle="Detailed percentage share per language." icon={FileCode2}>
         <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
           {entries.map(([name, bytes]) => {
             const pct = (bytes / total) * 100;
@@ -1891,7 +1905,7 @@ function LanguagesTab({ data }: { data: FetchResult }) {
 
       <DependenciesCard deps={data.dependencies} className="lg:col-span-2" />
 
-      <Card className="lg:col-span-2">
+      <Card title="Language Proportions" subtitle="Relative codebase composition at a glance." icon={Code2} className="lg:col-span-2">
         <div className="flex h-4 w-full overflow-hidden rounded-full border border-zinc-800">
           {entries.map(([name, bytes]) => {
             const pct = (bytes / total) * 100;
@@ -1924,7 +1938,7 @@ function DependenciesCard({ deps, className = '' }: { deps: FetchResult['depende
 
   if (!deps?.hasPackageJson) {
     return (
-      <Card title="Core Dependencies" icon={Package} className={className}>
+      <Card title="Core Dependencies" subtitle="Production and development package dependencies." icon={Package} className={className}>
         <div className="flex flex-col items-center justify-center py-10 text-center">
           <Package className="h-8 w-8 text-zinc-700" />
           <p className="mt-3 text-sm text-zinc-500">
@@ -1936,7 +1950,7 @@ function DependenciesCard({ deps, className = '' }: { deps: FetchResult['depende
   }
 
   return (
-    <Card title="Core Dependencies" icon={Package} className={className}>
+    <Card title="Core Dependencies" subtitle="Production and development package dependencies." icon={Package} className={className}>
       <div className="space-y-4">
         {depEntries.length > 0 && (
           <div>
