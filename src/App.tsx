@@ -15,7 +15,7 @@ import {
   XCircle, Tag, GitBranch,
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
-import { fetchRepoData, fetchPunchCard, fetchCodeFrequency, parseRepoInput, getStoredToken, setStoredToken } from './github';
+import { fetchRepoData, fetchPunchCard, fetchCodeFrequency, fetchClosedPRs, parseRepoInput, getStoredToken, setStoredToken, type PullRequestData } from './github';
 import type { FetchResult, RepoData, CommunityProfile } from './types';
 import type { User } from '@supabase/supabase-js';
 import {
@@ -546,6 +546,56 @@ function HeroSection({
   );
 }
 
+/* ---------- Project Star Badge ---------- */
+const PROJECT_GITHUB_REPO = 'https://github.com/your-username/gitdeck';
+
+function ProjectStarBadge() {
+  const [starCount, setStarCount] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    const match = PROJECT_GITHUB_REPO.match(/github\.com\/([^/]+)\/([^/]+)/);
+    if (!match) {
+      setLoading(false);
+      return;
+    }
+    const [, owner, repo] = match;
+    fetch(`https://api.github.com/repos/${owner}/${repo}`)
+      .then((r) => r.json())
+      .then((body) => {
+        if (cancelled) return;
+        if (typeof body?.stargazers_count === 'number') {
+          setStarCount(body.stargazers_count);
+        }
+        setLoading(false);
+      })
+      .catch(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  return (
+    <a
+      href={PROJECT_GITHUB_REPO}
+      target="_blank"
+      rel="noopener noreferrer"
+      title="Star GitDeck on GitHub"
+      className="flex h-9 items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900 px-2.5 text-[11px] text-zinc-400 transition hover:border-zinc-700 hover:bg-zinc-800 hover:text-zinc-200"
+    >
+      <Github className="h-3.5 w-3.5" />
+      <span className="h-3.5 w-px bg-zinc-700" />
+      <Star className="h-3.5 w-3.5" />
+      {loading ? (
+        <span className="text-zinc-600">—</span>
+      ) : starCount !== null ? (
+        <span className="font-medium text-zinc-300">{formatNumber(starCount)}</span>
+      ) : (
+        <Star className="h-3 w-3 text-zinc-600" />
+      )}
+    </a>
+  );
+}
+
 /* ---------- Header ---------- */
 function Header({
   input, setInput, onSubmit, showSearch, rateLimit,
@@ -637,6 +687,9 @@ function Header({
 
           {/* Right Column — Controls */}
           <div className="flex justify-end items-center gap-2 sm:gap-4">
+            {/* GitHub project repo star badge */}
+            <ProjectStarBadge />
+
             {/* Rate limit pill — clickable to open API token settings */}
             {rateLimit && (
               <button
@@ -1432,6 +1485,10 @@ function IssuesTab({ data }: { data: FetchResult }) {
     return <ChartEmptyState icon={AlertCircle} message="No issues or pull requests found for this repository." />;
   }
 
+  const repo = data.repo;
+  const owner = repo.owner.login;
+  const repoName = repo.name;
+
   const issuePie = [
     { name: 'Open Issues', value: stats.openIssues.length, color: '#f87171' },
     { name: 'Closed Issues', value: stats.closedIssues.length, color: '#a1a1aa' },
@@ -1483,6 +1540,8 @@ function IssuesTab({ data }: { data: FetchResult }) {
           <Stat label="Avg Age (open)" value={`${stats.avgAgeOpen}d`} icon={Clock} />
         </div>
       </Card>
+
+      <PRMergeVelocityCard owner={owner} repo={repoName} />
 
       <CommunityStandardsCard community={data.community} />
 
@@ -1682,6 +1741,186 @@ function ExecutiveHealthInsightsCard({ data }: { data: FetchResult }) {
             </div>
           </motion.div>
         ))}
+      </div>
+    </Card>
+  );
+}
+
+/* ---------- PR Merge Velocity Card ---------- */
+function formatDuration(hours: number): string {
+  if (hours < 1) return '< 1h';
+  if (hours < 24) return `${Math.round(hours)}h`;
+  const days = hours / 24;
+  if (days < 10) return `${days.toFixed(1)}d`;
+  return `${Math.round(days)}d+`;
+}
+
+function PRMergeVelocityCard({ owner, repo }: { owner: string; repo: string }) {
+  const [prs, setPrs] = useState<PullRequestData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    fetchClosedPRs(owner, repo).then((result) => {
+      if (cancelled) return;
+      setPrs(result.pullRequests);
+      setError(result.error);
+      setLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [owner, repo]);
+
+  const mergedPRs = useMemo(
+    () => prs.filter((pr) => pr.merged_at !== null),
+    [prs]
+  );
+
+  const { medianHours, fastCount, moderateCount, slowCount, slowestPR } = useMemo(() => {
+    const durations = mergedPRs
+      .map((pr) => (new Date(pr.merged_at!).getTime() - new Date(pr.created_at).getTime()) / (1000 * 60 * 60))
+      .sort((a, b) => a - b);
+
+    if (durations.length === 0) {
+      return { medianHours: null, fastCount: 0, moderateCount: 0, slowCount: 0, slowestPR: null as PullRequestData | null };
+    }
+
+    const mid = Math.floor(durations.length / 2);
+    const median = durations.length % 2 === 0
+      ? (durations[mid - 1] + durations[mid]) / 2
+      : durations[mid];
+
+    let fast = 0, moderate = 0, slow = 0;
+    mergedPRs.forEach((pr) => {
+      const hrs = (new Date(pr.merged_at!).getTime() - new Date(pr.created_at).getTime()) / (1000 * 60 * 60);
+      if (hrs < 24) fast++;
+      else if (hrs <= 72) moderate++;
+      else slow++;
+    });
+
+    let slowest = mergedPRs[0] ?? null;
+    let slowestHrs = 0;
+    mergedPRs.forEach((pr) => {
+      const hrs = (new Date(pr.merged_at!).getTime() - new Date(pr.created_at).getTime()) / (1000 * 60 * 60);
+      if (hrs > slowestHrs) { slowestHrs = hrs; slowest = pr; }
+    });
+
+    return { medianHours: median, fastCount: fast, moderateCount: moderate, slowCount: slow, slowestPR: slowest };
+  }, [mergedPRs]);
+
+  if (loading) {
+    return (
+      <Card title="PR Merge Velocity" subtitle="Median turnaround time from pull request opening to merge." icon={GitPullRequest}>
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-5 w-5 animate-spin text-indigo-400" />
+        </div>
+      </Card>
+    );
+  }
+
+  if (mergedPRs.length === 0) {
+    return (
+      <Card title="PR Merge Velocity" subtitle="Median turnaround time from pull request opening to merge." icon={GitPullRequest}>
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <GitPullRequest className="h-8 w-8 text-zinc-700" />
+          <p className="mt-3 text-sm text-zinc-500">
+            No merged pull request data available for this repository.
+          </p>
+          <p className="mt-1 text-[11px] text-zinc-600">
+            This may be a new repo or has no recent merged PRs.
+          </p>
+        </div>
+      </Card>
+    );
+  }
+
+  const status = medianHours === null
+    ? null
+    : medianHours < 24
+      ? { label: 'Fast (< 24h)', color: 'text-emerald-400', bg: 'border-emerald-500/30 bg-emerald-500/10' }
+      : medianHours <= 72
+        ? { label: 'Moderate (1-3d)', color: 'text-indigo-400', bg: 'border-indigo-500/30 bg-indigo-500/10' }
+        : { label: 'Slow / Backlogged (> 3d)', color: 'text-amber-400', bg: 'border-amber-500/30 bg-amber-500/10' };
+
+  const slowestHours = slowestPR
+    ? (new Date(slowestPR.merged_at!).getTime() - new Date(slowestPR.created_at).getTime()) / (1000 * 60 * 60)
+    : null;
+
+  return (
+    <Card title="PR Merge Velocity" subtitle="Median turnaround time from pull request opening to merge." icon={GitPullRequest}>
+      <div className="flex flex-col gap-5">
+        {/* Hero metric */}
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-baseline gap-3">
+            <span className="text-4xl font-bold tracking-tight text-white">
+              {medianHours !== null ? formatDuration(medianHours) : '—'}
+            </span>
+            <span className="text-xs text-zinc-500">median merge time</span>
+          </div>
+          {status && (
+            <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-medium ${status.bg} ${status.color}`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${status.color.replace('text-', 'bg-')}`} />
+              {status.label}
+            </span>
+          )}
+        </div>
+
+        {/* Breakdown stats */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-3">
+            <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 mb-1">
+              <span className="h-2 w-2 rounded-full bg-emerald-400" />
+              Fast
+            </div>
+            <div className="text-xl font-semibold text-zinc-100">{fastCount}</div>
+            <div className="text-[10px] text-zinc-600 mt-0.5">&lt; 24h</div>
+          </div>
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-3">
+            <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 mb-1">
+              <span className="h-2 w-2 rounded-full bg-indigo-400" />
+              Moderate
+            </div>
+            <div className="text-xl font-semibold text-zinc-100">{moderateCount}</div>
+            <div className="text-[10px] text-zinc-600 mt-0.5">1–3d</div>
+          </div>
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-3">
+            <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 mb-1">
+              <span className="h-2 w-2 rounded-full bg-amber-400" />
+              Slow
+            </div>
+            <div className="text-xl font-semibold text-zinc-100">{slowCount}</div>
+            <div className="text-[10px] text-zinc-600 mt-0.5">&gt; 3d</div>
+          </div>
+        </div>
+
+        {/* Sample size + slowest PR */}
+        <div className="flex items-center justify-between flex-wrap gap-2 text-[11px] text-zinc-500">
+          <span>
+            Based on <span className="text-zinc-300 font-medium">{mergedPRs.length}</span> merged PR{mergedPRs.length !== 1 ? 's' : ''}
+            {prs.length > mergedPRs.length && (
+              <span className="text-zinc-600"> · {prs.length - mergedPRs.length} closed without merge</span>
+            )}
+          </span>
+          {slowestPR && slowestHours !== null && (
+            <a
+              href={slowestPR.html_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-zinc-500 hover:text-zinc-300 transition"
+            >
+              Slowest: #{slowestPR.number} ({formatDuration(slowestHours)})
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          )}
+        </div>
+
+        {error && (
+          <p className="text-[10px] text-zinc-600">
+            Some data may be incomplete — {error}
+          </p>
+        )}
       </div>
     </Card>
   );

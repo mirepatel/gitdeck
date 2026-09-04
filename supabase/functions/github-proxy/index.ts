@@ -262,6 +262,43 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // GET /functions/v1/github-proxy?action=closed_prs&owner=facebook&repo=react
+    if (action === "closed_prs") {
+      const owner = url.searchParams.get("owner");
+      const repo = url.searchParams.get("repo");
+      if (!owner || !repo) {
+        return new Response(
+          JSON.stringify({ error: "Missing owner or repo parameters." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const clientToken = url.searchParams.get("token");
+      const envToken = Deno.env.get("GITHUB_TOKEN") ?? null;
+      const token = clientToken || envToken;
+
+      const prs = await ghFetch<Array<{
+        number: number;
+        title: string;
+        html_url: string;
+        created_at: string;
+        merged_at: string | null;
+        closed_at: string | null;
+        user: { login: string; avatar_url: string } | null;
+      }>>(
+        `/repos/${owner}/${repo}/pulls?state=closed&sort=updated&direction=desc&per_page=30`,
+        token
+      );
+
+      return new Response(
+        JSON.stringify({
+          pullRequests: prs.data ?? [],
+          rateLimit: prs.rateLimit,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     return new Response(
       JSON.stringify({ error: `Unknown action: ${action}` }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }

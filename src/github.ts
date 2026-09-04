@@ -178,3 +178,45 @@ export async function fetchCodeFrequency(
     return { codeFrequency: [], error: 'Network error fetching code frequency data.' };
   }
 }
+
+export interface PullRequestData {
+  number: number;
+  title: string;
+  html_url: string;
+  created_at: string;
+  merged_at: string | null;
+  closed_at: string | null;
+  user: { login: string; avatar_url: string } | null;
+}
+
+export async function fetchClosedPRs(
+  owner: string,
+  repo: string
+): Promise<{ pullRequests: PullRequestData[]; error: string | null }> {
+  try {
+    const token = getStoredToken();
+    const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/github-proxy`;
+    const params = new URLSearchParams({
+      action: 'closed_prs',
+      owner,
+      repo,
+    });
+    if (token) params.set('token', token);
+
+    const res = await fetch(`${apiUrl}?${params.toString()}`, {
+      headers: {
+        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!res.ok) {
+      return { pullRequests: [], error: `Server error (${res.status}).` };
+    }
+
+    const body = await res.json();
+    return { pullRequests: body.pullRequests ?? [], error: null };
+  } catch {
+    return { pullRequests: [], error: 'Network error fetching pull request data.' };
+  }
+}
