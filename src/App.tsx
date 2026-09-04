@@ -547,7 +547,7 @@ function HeroSection({
 }
 
 /* ---------- Project Star Badge ---------- */
-const PROJECT_GITHUB_REPO = 'https://github.com/your-username/gitdeck';
+const PROJECT_GITHUB_REPO = 'https://github.com/mirepatel/gitdeck';
 
 function ProjectStarBadge() {
   const [starCount, setStarCount] = useState<number | null>(null);
@@ -580,18 +580,14 @@ function ProjectStarBadge() {
       target="_blank"
       rel="noopener noreferrer"
       title="Star GitDeck on GitHub"
-      className="flex h-9 items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900 px-2.5 text-[11px] text-zinc-400 transition hover:border-zinc-700 hover:bg-zinc-800 hover:text-zinc-200"
+      className="flex h-9 items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-2.5 text-[11px] text-zinc-400 transition hover:border-zinc-700 hover:bg-zinc-800 hover:text-zinc-200 shrink-0"
     >
       <Github className="h-3.5 w-3.5" />
       <span className="h-3.5 w-px bg-zinc-700" />
-      <Star className="h-3.5 w-3.5" />
-      {loading ? (
-        <span className="text-zinc-600">—</span>
-      ) : starCount !== null ? (
-        <span className="font-medium text-zinc-300">{formatNumber(starCount)}</span>
-      ) : (
-        <Star className="h-3 w-3 text-zinc-600" />
-      )}
+      <Star className="h-3 w-3 text-amber-400" />
+      <span className="font-medium text-zinc-300">
+        {loading ? '0' : formatNumber(starCount ?? 0)}
+      </span>
     </a>
   );
 }
@@ -649,7 +645,7 @@ function Header({
           {showSearch && (
             <form
               onSubmit={onSubmit}
-              className="hidden md:flex absolute left-1/2 -translate-x-1/2 w-full max-w-md lg:max-w-lg"
+              className="hidden md:flex absolute left-1/2 -translate-x-1/2 flex-1 max-w-sm lg:max-w-md min-w-0"
             >
               <div className="group relative w-full">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500 group-focus-within:text-zinc-300 transition-colors" />
@@ -659,9 +655,9 @@ function Header({
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Search public repo (e.g. facebook/react)..."
-                  className="h-9 w-full rounded-xl border border-zinc-800 bg-zinc-900/60 pl-10 pr-20 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none transition focus:border-zinc-600 focus:ring-2 focus:ring-indigo-500/20"
+                  className="h-9 w-full rounded-xl border border-zinc-800 bg-zinc-900/60 pl-10 pr-3 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none transition focus:border-zinc-600 focus:ring-2 focus:ring-indigo-500/20"
                 />
-                <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 hidden items-center gap-0.5 rounded-md border border-zinc-700 bg-zinc-800/80 px-1.5 py-0.5 text-[10px] font-medium text-zinc-400 sm:flex">
+                <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 hidden items-center gap-0.5 rounded-md border border-zinc-700 bg-zinc-800/80 px-1.5 py-0.5 text-[10px] font-medium text-zinc-400 lg:flex">
                   {shortcutLabel}
                 </kbd>
               </div>
@@ -686,7 +682,7 @@ function Header({
           )}
 
           {/* Right Column — Controls */}
-          <div className="flex justify-end items-center gap-2 sm:gap-4">
+          <div className="flex items-center justify-end gap-2 sm:gap-3 shrink-0">
             {/* GitHub project repo star badge */}
             <ProjectStarBadge />
 
