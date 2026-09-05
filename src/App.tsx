@@ -12,7 +12,7 @@ import {
   Archive, Loader2, Mail, Lock, ChevronDown, Settings, KeyRound, Trash2,
   ArrowRight, Zap, FileJson, FileType, ChevronDown as ChevronDownIcon, Package,
   Heart, Check, BookOpen, FileText, GitPullRequest, ExternalLink,
-  XCircle, Tag, GitBranch,
+  XCircle, Tag, GitBranch, Sun, Moon,
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { fetchRepoData, fetchPunchCard, fetchCodeFrequency, fetchClosedPRs, parseRepoInput, getStoredToken, setStoredToken, type PullRequestData } from './github';
@@ -24,6 +24,7 @@ import {
   healthScore,
 } from './analytics';
 import { useAuth } from './lib/auth';
+import { useTheme } from './lib/theme';
 import { supabase } from './lib/supabase';
 import {
   listArchivedReports, archiveAuditReport, downloadArchivedReport,
@@ -546,6 +547,20 @@ function HeroSection({
   );
 }
 
+/* ---------- Theme Toggle ---------- */
+function ThemeToggle() {
+  const { theme, toggleTheme } = useTheme();
+  return (
+    <button
+      onClick={toggleTheme}
+      title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+      className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-200 shrink-0"
+    >
+      {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+    </button>
+  );
+}
+
 /* ---------- Project Star Badge ---------- */
 const PROJECT_GITHUB_REPO = 'https://github.com/mirepatel/gitdeck';
 
@@ -561,7 +576,7 @@ function ProjectStarBadge() {
       return;
     }
     const [, owner, repo] = match;
-    fetch(`https://api.github.com/repos/${owner}/${repo}`)
+    fetch(`https://api.github.com/repos/${owner}/${repo}`, { cache: 'no-store' })
       .then((r) => r.json())
       .then((body) => {
         if (cancelled) return;
@@ -645,7 +660,7 @@ function Header({
           {showSearch && (
             <form
               onSubmit={onSubmit}
-              className="hidden md:flex absolute left-1/2 -translate-x-1/2 flex-1 max-w-sm lg:max-w-md min-w-0"
+              className="hidden md:flex absolute left-1/2 -translate-x-1/2 w-[min(100%-32rem,28rem)] lg:w-[min(100%-32rem,32rem)] max-w-md min-w-[200px]"
             >
               <div className="group relative w-full">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500 group-focus-within:text-zinc-300 transition-colors" />
@@ -657,7 +672,7 @@ function Header({
                   placeholder="Search public repo (e.g. facebook/react)..."
                   className="h-9 w-full rounded-xl border border-zinc-800 bg-zinc-900/60 pl-10 pr-3 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none transition focus:border-zinc-600 focus:ring-2 focus:ring-indigo-500/20"
                 />
-                <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 hidden items-center gap-0.5 rounded-md border border-zinc-700 bg-zinc-800/80 px-1.5 py-0.5 text-[10px] font-medium text-zinc-400 lg:flex">
+                <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 hidden items-center gap-0.5 rounded-md border border-zinc-700 bg-zinc-800/80 px-1.5 py-0.5 text-[10px] font-medium text-zinc-400 xl:flex">
                   {shortcutLabel}
                 </kbd>
               </div>
@@ -704,6 +719,9 @@ function Header({
                 )}
               </button>
             )}
+
+            {/* Theme toggle */}
+            <ThemeToggle />
 
             {/* Auth area */}
             {authLoading ? (
@@ -1539,6 +1557,8 @@ function IssuesTab({ data }: { data: FetchResult }) {
 
       <PRMergeVelocityCard owner={owner} repo={repoName} />
 
+      <StaleIssuesCard owner={owner} repo={repoName} />
+
       <CommunityStandardsCard community={data.community} />
 
       <ExecutiveHealthInsightsCard data={data} />
@@ -1845,15 +1865,15 @@ function PRMergeVelocityCard({ owner, repo }: { owner: string; repo: string }) {
     : null;
 
   return (
-    <Card title="PR Merge Velocity" subtitle="Median turnaround time from pull request opening to merge." icon={GitPullRequest}>
+    <Card title="PR Merge Velocity" subtitle="Median turnaround time from pull request opening to merge." icon={GitPullRequest} className="lg:col-span-2">
       <div className="flex flex-col gap-5">
-        {/* Hero metric */}
+        {/* Hero metric + breakdown row */}
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-baseline gap-3">
-            <span className="text-4xl font-bold tracking-tight text-white">
+            <span className="text-4xl font-bold tracking-tight text-white dark:text-white text-zinc-900">
               {medianHours !== null ? formatDuration(medianHours) : '—'}
             </span>
-            <span className="text-xs text-zinc-500">median merge time</span>
+            <span className="text-xs text-zinc-500 dark:text-zinc-500 text-zinc-400">median merge time</span>
           </div>
           {status && (
             <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-medium ${status.bg} ${status.color}`}>
@@ -1863,40 +1883,40 @@ function PRMergeVelocityCard({ owner, repo }: { owner: string; repo: string }) {
           )}
         </div>
 
-        {/* Breakdown stats */}
+        {/* Breakdown stats — full width grid */}
         <div className="grid grid-cols-3 gap-3">
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-3">
-            <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 mb-1">
+          <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/40 p-4">
+            <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 dark:text-zinc-500 text-zinc-400 mb-1">
               <span className="h-2 w-2 rounded-full bg-emerald-400" />
               Fast
             </div>
-            <div className="text-xl font-semibold text-zinc-100">{fastCount}</div>
-            <div className="text-[10px] text-zinc-600 mt-0.5">&lt; 24h</div>
+            <div className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">{fastCount}</div>
+            <div className="text-[10px] text-zinc-400 dark:text-zinc-600 mt-0.5">&lt; 24h</div>
           </div>
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-3">
-            <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 mb-1">
+          <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/40 p-4">
+            <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 dark:text-zinc-500 text-zinc-400 mb-1">
               <span className="h-2 w-2 rounded-full bg-indigo-400" />
               Moderate
             </div>
-            <div className="text-xl font-semibold text-zinc-100">{moderateCount}</div>
-            <div className="text-[10px] text-zinc-600 mt-0.5">1–3d</div>
+            <div className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">{moderateCount}</div>
+            <div className="text-[10px] text-zinc-400 dark:text-zinc-600 mt-0.5">1–3d</div>
           </div>
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-3">
-            <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 mb-1">
+          <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/40 p-4">
+            <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 dark:text-zinc-500 text-zinc-400 mb-1">
               <span className="h-2 w-2 rounded-full bg-amber-400" />
               Slow
             </div>
-            <div className="text-xl font-semibold text-zinc-100">{slowCount}</div>
-            <div className="text-[10px] text-zinc-600 mt-0.5">&gt; 3d</div>
+            <div className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">{slowCount}</div>
+            <div className="text-[10px] text-zinc-400 dark:text-zinc-600 mt-0.5">&gt; 3d</div>
           </div>
         </div>
 
         {/* Sample size + slowest PR */}
-        <div className="flex items-center justify-between flex-wrap gap-2 text-[11px] text-zinc-500">
+        <div className="flex items-center justify-between flex-wrap gap-2 text-[11px] text-zinc-500 dark:text-zinc-500 text-zinc-400">
           <span>
-            Based on <span className="text-zinc-300 font-medium">{mergedPRs.length}</span> merged PR{mergedPRs.length !== 1 ? 's' : ''}
+            Based on <span className="text-zinc-700 dark:text-zinc-300 font-medium">{mergedPRs.length}</span> merged PR{mergedPRs.length !== 1 ? 's' : ''}
             {prs.length > mergedPRs.length && (
-              <span className="text-zinc-600"> · {prs.length - mergedPRs.length} closed without merge</span>
+              <span className="text-zinc-400 dark:text-zinc-600"> · {prs.length - mergedPRs.length} closed without merge</span>
             )}
           </span>
           {slowestPR && slowestHours !== null && (
@@ -1904,7 +1924,7 @@ function PRMergeVelocityCard({ owner, repo }: { owner: string; repo: string }) {
               href={slowestPR.html_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 text-zinc-500 hover:text-zinc-300 transition"
+              className="flex items-center gap-1 text-zinc-500 dark:text-zinc-500 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 transition"
             >
               Slowest: #{slowestPR.number} ({formatDuration(slowestHours)})
               <ExternalLink className="h-3 w-3" />
@@ -1913,7 +1933,170 @@ function PRMergeVelocityCard({ owner, repo }: { owner: string; repo: string }) {
         </div>
 
         {error && (
-          <p className="text-[10px] text-zinc-600">
+          <p className="text-[10px] text-zinc-400 dark:text-zinc-600">
+            Some data may be incomplete — {error}
+          </p>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+/* ---------- Stale Issues Backlog Card ---------- */
+function StaleIssuesCard({ owner, repo }: { owner: string; repo: string }) {
+  const [issues, setIssues] = useState<Array<{ number: number; title: string; created_at: string; html_url: string }>>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    fetchClosedPRs(owner, repo).then(() => {
+      // We reuse the edge function pattern but fetch open issues via a direct call
+      // The github-proxy already handles issues via the main fetchRepoData, but for
+      // stale analysis we need open issues specifically. We'll fetch via the proxy.
+      const token = getStoredToken();
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/github-proxy`;
+      const params = new URLSearchParams({ action: 'open_issues', owner, repo });
+      if (token) params.set('token', token);
+      fetch(`${apiUrl}?${params.toString()}`, {
+        headers: {
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      })
+        .then((r) => r.json())
+        .then((body) => {
+          if (cancelled) return;
+          setIssues(body.issues ?? []);
+          setError(body.error ?? null);
+          setLoading(false);
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setError('Network error fetching open issues.');
+            setLoading(false);
+          }
+        });
+    });
+    return () => { cancelled = true; };
+  }, [owner, repo]);
+
+  const { fresh, midAged, stale, stalestIssue } = useMemo(() => {
+    const now = Date.now();
+    const dayMs = 24 * 60 * 60 * 1000;
+    let f = 0, m = 0, s = 0;
+    let stalest = issues[0] ?? null;
+    let stalestDays = 0;
+    issues.forEach((iss) => {
+      const ageDays = (now - new Date(iss.created_at).getTime()) / dayMs;
+      if (ageDays < 30) f++;
+      else if (ageDays <= 180) m++;
+      else s++;
+      if (ageDays > stalestDays) { stalestDays = ageDays; stalest = iss; }
+    });
+    return { fresh: f, midAged: m, stale: s, stalestIssue: stalest };
+  }, [issues]);
+
+  const total = issues.length;
+  const freshPct = total > 0 ? (fresh / total) * 100 : 0;
+  const midPct = total > 0 ? (midAged / total) * 100 : 0;
+  const stalePct = total > 0 ? (stale / total) * 100 : 0;
+  const stalestDays = stalestIssue
+    ? Math.floor((Date.now() - new Date(stalestIssue.created_at).getTime()) / (24 * 60 * 60 * 1000))
+    : null;
+
+  if (loading) {
+    return (
+      <Card title="Issue Stale Backlog" subtitle="Open issues categorized by age to show triage activity." icon={Clock}>
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-5 w-5 animate-spin text-indigo-400" />
+        </div>
+      </Card>
+    );
+  }
+
+  if (total === 0) {
+    return (
+      <Card title="Issue Stale Backlog" subtitle="Open issues categorized by age to show triage activity." icon={Clock}>
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <CheckCircle2 className="h-8 w-8 text-emerald-400" />
+          <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-500 text-zinc-400">
+            No open issues — the backlog is clear.
+          </p>
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <Card title="Issue Stale Backlog" subtitle="Open issues categorized by age to show triage activity." icon={Clock}>
+      <div className="flex flex-col gap-5">
+        {/* Stacked horizontal bar */}
+        <div className="flex h-3 w-full overflow-hidden rounded-full border border-zinc-200 dark:border-zinc-800">
+          {freshPct > 0 && (
+            <div className="h-full bg-emerald-500 transition-all" style={{ width: `${freshPct}%` }} title={`Fresh: ${fresh} issues (< 30 days)`} />
+          )}
+          {midPct > 0 && (
+            <div className="h-full bg-indigo-500 transition-all" style={{ width: `${midPct}%` }} title={`Aging: ${midAged} issues (1-6 months)`} />
+          )}
+          {stalePct > 0 && (
+            <div className="h-full bg-rose-500 transition-all" style={{ width: `${stalePct}%` }} title={`Stale: ${stale} issues (6+ months)`} />
+          )}
+        </div>
+
+        {/* Metric blocks — full width grid */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/40 p-4">
+            <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 dark:text-zinc-500 text-zinc-400 mb-1">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              Fresh
+            </div>
+            <div className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">{fresh}</div>
+            <div className="text-[10px] text-zinc-400 dark:text-zinc-600 mt-0.5">&lt; 30 days</div>
+          </div>
+          <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/40 p-4">
+            <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 dark:text-zinc-500 text-zinc-400 mb-1">
+              <span className="h-2 w-2 rounded-full bg-indigo-500" />
+              Aging
+            </div>
+            <div className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">{midAged}</div>
+            <div className="text-[10px] text-zinc-400 dark:text-zinc-600 mt-0.5">1–6 months</div>
+          </div>
+          <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/40 p-4">
+            <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 dark:text-zinc-500 text-zinc-400 mb-1">
+              <span className="h-2 w-2 rounded-full bg-rose-500" />
+              Stale
+            </div>
+            <div className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">{stale}</div>
+            <div className="text-[10px] text-zinc-400 dark:text-zinc-600 mt-0.5">6+ months</div>
+          </div>
+        </div>
+
+        {/* Summary + oldest issue */}
+        <div className="flex items-center justify-between flex-wrap gap-2 text-[11px] text-zinc-500 dark:text-zinc-500 text-zinc-400">
+          <span>
+            Tracking <span className="text-zinc-700 dark:text-zinc-300 font-medium">{total}</span> open issue{total !== 1 ? 's' : ''}
+            {stale > 0 && (
+              <span className="text-rose-400 dark:text-rose-400"> · {stalePct.toFixed(0)}% stale</span>
+            )}
+          </span>
+          {stalestIssue && stalestDays !== null && (
+            <a
+              href={stalestIssue.html_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-zinc-500 dark:text-zinc-500 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 transition"
+            >
+              Oldest: #{stalestIssue.number} ({stalestDays}d)
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          )}
+        </div>
+
+        {error && (
+          <p className="text-[10px] text-zinc-400 dark:text-zinc-600">
             Some data may be incomplete — {error}
           </p>
         )}
