@@ -46,13 +46,35 @@ const TABS = [
 
 type TabId = typeof TABS[number]['id'];
 
-const TOOLTIP_STYLE = {
+const TOOLTIP_STYLE_DARK = {
   background: 'rgba(9,9,11,0.96)',
   border: '1px solid #27272a',
   borderRadius: 12,
   fontSize: 12,
   color: '#e4e4e7',
 } as const;
+
+const TOOLTIP_STYLE_LIGHT = {
+  background: 'rgba(255,255,255,0.96)',
+  border: '1px solid #e4e4e7',
+  borderRadius: 12,
+  fontSize: 12,
+  color: '#27272a',
+} as const;
+
+function useTooltipStyle() {
+  const { theme } = useTheme();
+  return theme === 'dark' ? TOOLTIP_STYLE_DARK : TOOLTIP_STYLE_LIGHT;
+}
+
+function useChartColors() {
+  const { theme } = useTheme();
+  return {
+    grid: theme === 'dark' ? '#27272a' : '#e4e4e7',
+    axis: theme === 'dark' ? '#52525b' : '#a1a1aa',
+    pieStroke: theme === 'dark' ? '#09090b' : '#ffffff',
+  };
+}
 
 /* Shared logo SVG — identical paths to favicon.svg */
 function LogoIcon({ className = 'h-5 w-5' }: { className?: string }) {
@@ -253,11 +275,11 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-transparent text-zinc-200">
+    <div className="min-h-screen bg-white dark:bg-transparent text-zinc-700 dark:text-zinc-200">
       {/* Ambient radial glow + grid background (fixed, non-blocking) */}
-      <div className="fixed inset-0 -z-10 bg-zinc-950" />
-      <div className="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_50%_50%_at_50%_0%,rgba(99,102,241,0.18),transparent_70%)]" />
-      <div className="fixed inset-0 -z-10 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px]" />
+      <div className="fixed inset-0 -z-10 bg-white dark:bg-zinc-950" />
+      <div className="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_50%_50%_at_50%_0%,rgba(99,102,241,0.08),transparent_70%)] dark:bg-[radial-gradient(ellipse_50%_50%_at_50%_0%,rgba(99,102,241,0.18),transparent_70%)]" />
+      <div className="fixed inset-0 -z-10 opacity-60 dark:opacity-100 bg-[linear-gradient(to_right,#d4d4d8_1px,transparent_1px),linear-gradient(to_bottom,#d4d4d8_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px]" />
 
       <Header
         input={input}
@@ -336,8 +358,8 @@ export default function App() {
                         onExport={onExport}
                         canExport={!!data.repo && !loading}
                       />
-                      <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl overflow-hidden">
-                        <div className="flex flex-row gap-1 border-b border-zinc-800 w-full overflow-x-auto px-4 pt-3 no-scrollbar">
+                      <div className="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/80 rounded-2xl overflow-hidden">
+                        <div className="flex flex-row gap-1 border-b border-zinc-200 dark:border-zinc-800 w-full overflow-x-auto px-4 pt-3 no-scrollbar">
                           {TABS.map((t) => {
                             const active = t.id === activeTab;
                             return (
@@ -346,8 +368,8 @@ export default function App() {
                                 onClick={() => setActiveTab(t.id)}
                                 className={`relative flex shrink-0 items-center gap-2 px-4 pb-3 text-sm transition-all ${
                                   active
-                                    ? 'text-white font-medium'
-                                    : 'text-zinc-400 hover:text-zinc-200'
+                                    ? 'text-zinc-900 dark:text-white font-medium'
+                                    : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'
                                 }`}
                               >
                                 <t.icon className="h-4 w-4" />
@@ -469,7 +491,7 @@ function HeroSection({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.05, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-        className="mb-6 flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/50 px-3 py-1.5 text-xs text-zinc-400 backdrop-blur-sm"
+        className="mb-6 flex items-center gap-2 rounded-full border border-zinc-200 dark:border-zinc-800 bg-white/60 dark:bg-zinc-900/50 px-3 py-1.5 text-xs text-zinc-600 dark:text-zinc-400 backdrop-blur-sm"
       >
         <Zap className="h-3.5 w-3.5 text-indigo-400" />
         Instant GitHub analytics — no setup required
@@ -479,7 +501,7 @@ function HeroSection({
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.12, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-        className="text-center text-4xl font-semibold tracking-tight text-zinc-100 sm:text-5xl lg:text-6xl"
+        className="text-center text-4xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-5xl lg:text-6xl"
       >
         Analyze{' '}
         <span className="bg-gradient-to-r from-indigo-400 via-indigo-300 to-blue-400 bg-clip-text text-transparent">
@@ -492,7 +514,7 @@ function HeroSection({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-        className="mt-4 max-w-xl text-center text-base text-zinc-400 sm:text-lg"
+        className="mt-4 max-w-xl text-center text-base text-zinc-500 dark:text-zinc-400 sm:text-lg"
       >
         Actionable codebase health, commit velocity, and contributor insights.
       </motion.p>
@@ -505,7 +527,7 @@ function HeroSection({
         className="mt-8 w-full max-w-xl mx-auto"
       >
         <div className="group relative">
-          <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-500 transition-colors group-focus-within:text-indigo-400" />
+          <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 transition-colors group-focus-within:text-indigo-500" />
           <input
             id="global-search-input"
             value={input}
@@ -513,11 +535,11 @@ function HeroSection({
             placeholder="Search public repo (e.g. facebook/react)..."
             ref={searchInputRef}
             autoFocus
-            className="w-full rounded-2xl border border-zinc-800 bg-zinc-900/60 py-4 pl-12 pr-32 text-base text-zinc-100 placeholder:text-zinc-600 outline-none transition focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10"
+            className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/60 py-4 pl-12 pr-32 text-base text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 outline-none transition focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10"
           />
           <button
             type="submit"
-            className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-black transition hover:bg-zinc-200 active:scale-95"
+            className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5 rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-zinc-800 active:scale-95 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
           >
             Analyze
             <ArrowRight className="h-4 w-4" />
@@ -531,12 +553,12 @@ function HeroSection({
         transition={{ delay: 0.4, duration: 0.5 }}
         className="mt-8 flex flex-wrap items-center justify-center gap-2"
       >
-        <span className="text-xs text-zinc-600">Try:</span>
+        <span className="text-xs text-zinc-400 dark:text-zinc-600">Try:</span>
         {PRESETS.map((p) => (
           <button
             key={p}
             onClick={() => onSelectPreset(p)}
-            className="group flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/50 px-3 py-1.5 text-xs font-medium text-zinc-400 backdrop-blur-sm transition hover:border-zinc-700 hover:bg-zinc-800 hover:text-zinc-200"
+            className="group flex items-center gap-1.5 rounded-full border border-zinc-200 dark:border-zinc-800 bg-white/60 dark:bg-zinc-900/50 px-3 py-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-400 backdrop-blur-sm transition hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-200"
           >
             <Github className="h-3 w-3" />
             {p}
@@ -595,12 +617,12 @@ function ProjectStarBadge() {
       target="_blank"
       rel="noopener noreferrer"
       title="Star GitDeck on GitHub"
-      className="flex h-9 items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-2.5 text-[11px] text-zinc-400 transition hover:border-zinc-700 hover:bg-zinc-800 hover:text-zinc-200 shrink-0"
+      className="flex h-9 items-center gap-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2.5 text-[11px] text-zinc-600 dark:text-zinc-400 transition hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-200 shrink-0"
     >
       <Github className="h-3.5 w-3.5" />
-      <span className="h-3.5 w-px bg-zinc-700" />
+      <span className="h-3.5 w-px bg-zinc-300 dark:bg-zinc-700" />
       <Star className="h-3 w-3 text-amber-400" />
-      <span className="font-medium text-zinc-300">
+      <span className="font-medium text-zinc-700 dark:text-zinc-300">
         {loading ? '0' : formatNumber(starCount ?? 0)}
       </span>
     </a>
@@ -635,7 +657,7 @@ function Header({
   const shortcutLabel = isMac ? '⌘K' : 'Ctrl+K';
 
   return (
-    <header className="sticky top-0 z-30 border-b border-zinc-800/50 glass">
+    <header className="sticky top-0 z-30 border-b border-zinc-200/50 dark:border-zinc-800/50 glass">
       <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
         <div className="relative flex items-center justify-between w-full flex-wrap gap-y-3">
           {/* Left Column — Logo + tagline (clickable → home) */}
@@ -644,14 +666,14 @@ function Header({
               onClick={onLogoClick}
               className="flex items-center gap-2.5 hover:opacity-80 transition-opacity cursor-pointer"
             >
-              <div className="grid h-9 w-9 place-items-center rounded-xl border border-zinc-800 bg-zinc-900">
+              <div className="grid h-9 w-9 place-items-center rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
                 <LogoIcon className="h-5 w-5" />
               </div>
               <div className="hidden sm:block text-left">
-                <h1 className="text-base font-semibold leading-none tracking-tight text-zinc-100">
+                <h1 className="text-base font-semibold leading-none tracking-tight text-zinc-900 dark:text-zinc-100">
                   GitDeck
                 </h1>
-                <p className="text-[10px] text-zinc-500 mt-0.5">Repository Intelligence</p>
+                <p className="text-[10px] text-zinc-500 dark:text-zinc-500 mt-0.5">Repository Intelligence</p>
               </div>
             </button>
           </div>
@@ -663,16 +685,16 @@ function Header({
               className="hidden md:flex absolute left-1/2 -translate-x-1/2 w-[min(100%-32rem,28rem)] lg:w-[min(100%-32rem,32rem)] max-w-md min-w-[200px]"
             >
               <div className="group relative w-full">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500 group-focus-within:text-zinc-300 transition-colors" />
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 group-focus-within:text-indigo-500 dark:group-focus-within:text-zinc-300 transition-colors" />
                 <input
                   id="global-search-input"
                   ref={searchInputRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Search public repo (e.g. facebook/react)..."
-                  className="h-9 w-full rounded-xl border border-zinc-800 bg-zinc-900/60 pl-10 pr-3 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none transition focus:border-zinc-600 focus:ring-2 focus:ring-indigo-500/20"
+                  className="h-9 w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/60 pl-10 pr-3 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 outline-none transition focus:border-indigo-500/50 dark:focus:border-zinc-600 focus:ring-2 focus:ring-indigo-500/20"
                 />
-                <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 hidden items-center gap-0.5 rounded-md border border-zinc-700 bg-zinc-800/80 px-1.5 py-0.5 text-[10px] font-medium text-zinc-400 xl:flex">
+                <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 hidden items-center gap-0.5 rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800/80 px-1.5 py-0.5 text-[10px] font-medium text-zinc-500 dark:text-zinc-400 xl:flex">
                   {shortcutLabel}
                 </kbd>
               </div>
@@ -683,14 +705,14 @@ function Header({
           {showSearch && (
             <form onSubmit={onSubmit} className="md:hidden order-3 w-full flex justify-center">
               <div className="group relative w-full max-w-md">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500 group-focus-within:text-zinc-300 transition-colors" />
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 group-focus-within:text-indigo-500 dark:group-focus-within:text-zinc-300 transition-colors" />
                 <input
                   id="global-search-input"
                   ref={searchInputRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Search public repo (e.g. facebook/react)..."
-                  className="h-9 w-full rounded-xl border border-zinc-800 bg-zinc-900/60 pl-10 pr-20 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none transition focus:border-zinc-600 focus:ring-2 focus:ring-indigo-500/20"
+                  className="h-9 w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/60 pl-10 pr-20 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 outline-none transition focus:border-indigo-500/50 dark:focus:border-zinc-600 focus:ring-2 focus:ring-indigo-500/20"
                 />
               </div>
             </form>
@@ -706,16 +728,16 @@ function Header({
               <button
                 onClick={onOpenSettings}
                 title="Click to set PAT & expand quota to 5,000 req/hr"
-                className={`relative flex h-9 items-center gap-1.5 rounded-xl border px-2.5 text-[11px] transition-colors hover:bg-zinc-800 cursor-pointer ${
+                className={`relative flex h-9 items-center gap-1.5 rounded-xl border px-2.5 text-[11px] transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer ${
                   hasToken
                     ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-400'
-                    : 'border-zinc-800 bg-zinc-900 text-zinc-500'
+                    : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-500'
                 }`}
               >
                 <Zap className="h-3.5 w-3.5" />
                 {rateLimit.remaining}/{rateLimit.limit}
                 {hasToken && (
-                  <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-400 ring-2 ring-zinc-950" />
+                  <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-400 ring-2 ring-white dark:ring-zinc-950" />
                 )}
               </button>
             )}
@@ -725,17 +747,17 @@ function Header({
 
             {/* Auth area */}
             {authLoading ? (
-              <div className="h-9 w-9 rounded-xl bg-zinc-900 animate-pulse" />
+              <div className="h-9 w-9 rounded-xl bg-zinc-200 dark:bg-zinc-900 animate-pulse" />
             ) : user ? (
               <div className="relative">
                 <button
                   onClick={() => setMenuOpen((v) => !v)}
-                  className="flex h-9 items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 pl-1 pr-2 transition hover:bg-zinc-800"
+                  className="flex h-9 items-center gap-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 pl-1 pr-2 transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
                 >
-                  <span className="grid h-7 w-7 place-items-center rounded-full bg-gradient-to-br from-zinc-700 to-zinc-900 text-xs font-semibold text-zinc-100">
+                  <span className="grid h-7 w-7 place-items-center rounded-full bg-gradient-to-br from-zinc-300 to-zinc-400 dark:from-zinc-700 dark:to-zinc-900 text-xs font-semibold text-zinc-700 dark:text-zinc-100">
                     {initial}
                   </span>
-                  <ChevronDown className="h-3.5 w-3.5 text-zinc-400" />
+                  <ChevronDown className="h-3.5 w-3.5 text-zinc-500 dark:text-zinc-400" />
                 </button>
                 <AnimatePresence>
                   {menuOpen && (
@@ -745,30 +767,30 @@ function Header({
                         initial={{ opacity: 0, y: -6, scale: 0.96 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -6, scale: 0.96 }}
-                        className="absolute right-0 top-full mt-2 z-50 w-52 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 shadow-2xl"
+                        className="absolute right-0 top-full mt-2 z-50 w-52 overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl"
                       >
-                        <div className="border-b border-zinc-800 px-3 py-2.5">
-                          <p className="text-[11px] text-zinc-500">Signed in as</p>
-                          <p className="truncate text-sm text-zinc-100">{user.email}</p>
+                        <div className="border-b border-zinc-200 dark:border-zinc-800 px-3 py-2.5">
+                          <p className="text-[11px] text-zinc-500 dark:text-zinc-500">Signed in as</p>
+                          <p className="truncate text-sm text-zinc-900 dark:text-zinc-100">{user.email}</p>
                         </div>
                         <button
                           onClick={() => { setMenuOpen(false); onOpenProfile(); }}
-                          className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-zinc-200 transition hover:bg-zinc-800"
+                          className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-zinc-700 dark:text-zinc-200 transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
                         >
-                          <UserIcon className="h-4 w-4 text-zinc-400" /> My Profile
+                          <UserIcon className="h-4 w-4 text-zinc-400 dark:text-zinc-400" /> My Profile
                         </button>
                         <button
                           onClick={() => { setMenuOpen(false); onOpenProfileAudits(); }}
-                          className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-zinc-200 transition hover:bg-zinc-800"
+                          className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-zinc-700 dark:text-zinc-200 transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
                         >
-                          <Archive className="h-4 w-4 text-zinc-400" /> Saved Audits
+                          <Archive className="h-4 w-4 text-zinc-400 dark:text-zinc-400" /> Saved Audits
                         </button>
-                        <div className="border-t border-zinc-800">
+                        <div className="border-t border-zinc-200 dark:border-zinc-800">
                           <button
                             onClick={() => { setMenuOpen(false); onSignOut(); }}
-                            className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-zinc-200 transition hover:bg-zinc-800"
+                            className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-zinc-700 dark:text-zinc-200 transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
                           >
-                            <LogOut className="h-4 w-4 text-zinc-400" /> Sign Out
+                            <LogOut className="h-4 w-4 text-zinc-400 dark:text-zinc-400" /> Sign Out
                           </button>
                         </div>
                       </motion.div>
@@ -779,7 +801,7 @@ function Header({
             ) : (
               <button
                 onClick={onOpenAuth}
-                className="flex h-9 items-center rounded-xl border border-zinc-700 bg-zinc-100 px-3 text-xs font-medium text-black transition hover:bg-white active:scale-95"
+                className="flex h-9 items-center rounded-xl bg-zinc-900 px-4 text-xs font-medium text-white shadow-sm transition hover:bg-zinc-800 active:scale-95 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
               >
                 Sign In
               </button>
@@ -815,8 +837,8 @@ function PresetBar({
               onClick={() => onSelect(p)}
               className={`group flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
                 active
-                  ? 'border-zinc-600 bg-zinc-100 text-black'
-                  : 'border-zinc-800 bg-zinc-900 text-zinc-300 hover:border-zinc-700 hover:bg-zinc-800'
+                  ? 'border-zinc-900 bg-zinc-900 text-white shadow-sm dark:border-white dark:bg-white dark:text-black'
+                  : 'border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-200/70 dark:hover:bg-zinc-800'
               }`}
             >
               <Github className="h-3 w-3" />
@@ -839,8 +861,8 @@ function PresetBar({
                 onClick={() => onSelect(b)}
                 className={`group flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
                   active
-                    ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-300'
-                    : 'border-zinc-800 bg-zinc-900 text-zinc-300 hover:border-zinc-700 hover:bg-zinc-800'
+                    ? 'border-emerald-600 bg-emerald-600 text-white shadow-sm dark:border-emerald-500/50 dark:bg-emerald-500/10 dark:text-emerald-300'
+                    : 'border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-200/70 dark:hover:bg-zinc-800'
                 }`}
               >
                 <Bookmark className="h-3 w-3" />
@@ -896,14 +918,14 @@ function VitalsBanner({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
-      className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/50 backdrop-blur-sm"
+      className="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 backdrop-blur-sm"
     >
       <div className="flex flex-col gap-4 p-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex items-start gap-4 min-w-0 flex-1">
           <img
             src={repo.owner.avatar_url}
             alt={repo.owner.login}
-            className="h-14 w-14 rounded-xl border border-zinc-800 shrink-0"
+            className="h-14 w-14 rounded-xl border border-zinc-200 dark:border-zinc-800 shrink-0"
           />
           <div className="min-w-0 flex-1">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
@@ -912,16 +934,16 @@ function VitalsBanner({
                   href={repo.html_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-lg font-semibold tracking-tight text-zinc-100 hover:text-white transition truncate"
+                  className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 hover:text-indigo-600 dark:hover:text-white transition truncate"
                 >
                   {repo.full_name}
                 </a>
-                <span className="rounded-full border border-zinc-800 bg-zinc-900 px-2 py-0.5 text-[10px] text-zinc-400">
+                <span className="rounded-full border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 px-2 py-0.5 text-[10px] text-zinc-600 dark:text-zinc-400">
                   {repo.default_branch}
                 </span>
                 <span className={`flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${scoreBg}`}>
                   <span className={`h-1.5 w-1.5 rounded-full ${dotColor} animate-pulse`} />
-                  <span className="text-zinc-300">Health Score:</span>
+                  <span className="text-zinc-600 dark:text-zinc-300">Health Score:</span>
                   <span className={`font-semibold ${scoreColor}`}>{hs.score}/100</span>
                   <span className="text-zinc-500">— {hs.activity}</span>
                 </span>
@@ -931,14 +953,14 @@ function VitalsBanner({
                     target="_blank"
                     rel="noreferrer"
                     title="Latest release"
-                    className="flex items-center gap-1.5 rounded-full border border-zinc-700 bg-zinc-900 px-2.5 py-0.5 text-[11px] font-medium text-zinc-300 transition hover:border-zinc-600 hover:bg-zinc-800"
+                    className="flex items-center gap-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-0.5 text-[11px] font-medium text-zinc-600 dark:text-zinc-300 transition hover:border-zinc-300 dark:hover:border-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                   >
                     <Tag className="h-3 w-3 text-zinc-400" />
                     {release.tag_name}
                     <span className="text-zinc-500">· {timeAgo(release.published_at)}</span>
                   </a>
                 ) : (
-                  <span className="flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900 px-2.5 py-0.5 text-[11px] font-medium text-zinc-400">
+                  <span className="flex items-center gap-1.5 rounded-full border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 px-2.5 py-0.5 text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
                     <GitBranch className="h-3 w-3 text-zinc-400" />
                     {repo.default_branch}
                   </span>
@@ -971,7 +993,7 @@ function VitalsBanner({
             className={`flex h-9 w-9 items-center justify-center rounded-lg border transition-all disabled:opacity-50 ${
               isBookmarked
                 ? 'border-amber-500/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20'
-                : 'border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800 text-zinc-400 hover:text-white'
+                : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
             }`}
           >
             {bookmarking ? (
@@ -984,21 +1006,21 @@ function VitalsBanner({
             onClick={onExport}
             disabled={!canExport}
             title="Export audit report"
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Download className="h-4 w-4" />
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 w-full p-6 border-t border-zinc-800/50">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 w-full p-6 border-t border-zinc-200/50 dark:border-zinc-800/50">
         {vitals.map((v) => (
-          <div key={v.label} className="flex flex-col p-4 rounded-xl border border-transparent hover:border-white/5 hover:bg-white/[0.02] transition-all duration-200">
-            <div className="flex items-center gap-1.5 text-sm text-zinc-400 font-medium mb-1.5">
-              <v.icon className="h-3.5 w-3.5 text-zinc-400" />
+          <div key={v.label} className="flex flex-col p-4 rounded-xl border border-transparent hover:border-zinc-200 dark:hover:border-white/5 hover:bg-zinc-50 dark:hover:bg-white/[0.02] transition-all duration-200">
+            <div className="flex items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400 font-medium mb-1.5">
+              <v.icon className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-400" />
               {v.label}
             </div>
-            <div className="text-2xl font-semibold text-white tracking-tight truncate">
+            <div className="text-2xl font-semibold text-zinc-900 dark:text-white tracking-tight truncate">
               {v.value}
             </div>
           </div>
@@ -1019,13 +1041,13 @@ function Card({
   className?: string;
 }) {
   return (
-    <div className={`rounded-2xl border border-zinc-800 bg-zinc-900/50 backdrop-blur-sm p-5 min-w-0 ${className}`}>
+    <div className={`rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 backdrop-blur-sm p-5 min-w-0 ${className}`}>
       {title && (
         <div className="mb-4 flex items-start gap-2">
-          {Icon && <Icon className="h-4 w-4 text-zinc-300 mt-0.5 shrink-0" />}
+          {Icon && <Icon className="h-4 w-4 text-zinc-600 dark:text-zinc-300 mt-0.5 shrink-0" />}
           <div>
-            <h3 className="text-sm font-semibold text-zinc-100">{title}</h3>
-            {subtitle && <p className="text-xs text-zinc-500 mt-0.5">{subtitle}</p>}
+            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{title}</h3>
+            {subtitle && <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-0.5">{subtitle}</p>}
           </div>
         </div>
       )}
@@ -1036,6 +1058,8 @@ function Card({
 
 /* ---------- Tab 1: Velocity ---------- */
 function VelocityTab({ data }: { data: FetchResult }) {
+  const tooltipStyle = useTooltipStyle();
+  const chartColors = useChartColors();
   const timeline = useMemo(() => commitTimeline(data.commits), [data.commits]);
   const authors = useMemo(() => authorDistribution(data.commits), [data.commits]);
   const recent = useMemo(() => recentCommits(data.commits), [data.commits]);
@@ -1064,14 +1088,14 @@ function VelocityTab({ data }: { data: FetchResult }) {
                   <stop offset="100%" stopColor="#6366f1" stopOpacity={0.25} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
-              <XAxis dataKey="date" stroke="#52525b" fontSize={11} tickMargin={8} />
-              <YAxis stroke="#52525b" fontSize={11} allowDecimals={false} />
-              <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: '#e4e4e7' }} />
+              <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
+              <XAxis dataKey="date" stroke={chartColors.axis} fontSize={11} tickMargin={8} />
+              <YAxis stroke={chartColors.axis} fontSize={11} allowDecimals={false} />
+              <Tooltip contentStyle={tooltipStyle} labelStyle={{ color: chartColors.axis }} />
               <Line
                 type="monotone" dataKey="count" stroke="url(#commitGrad)"
                 strokeWidth={2.5} dot={{ r: 3, fill: '#818cf8', strokeWidth: 0 }}
-                activeDot={{ r: 5, fill: '#818cf8', stroke: '#09090b', strokeWidth: 2 }}
+                activeDot={{ r: 5, fill: '#818cf8', stroke: chartColors.pieStroke, strokeWidth: 2 }}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -1092,10 +1116,10 @@ function VelocityTab({ data }: { data: FetchResult }) {
                   <stop offset="100%" stopColor="#6366f1" stopOpacity={0.8} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#27272a" horizontal={false} />
-              <XAxis type="number" stroke="#52525b" fontSize={11} allowDecimals={false} />
-              <YAxis type="category" dataKey="name" stroke="#52525b" fontSize={11} width={90} />
-              <Tooltip contentStyle={{ ...TOOLTIP_STYLE, padding: '8px 12px' }} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
+              <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} horizontal={false} />
+              <XAxis type="number" stroke={chartColors.axis} fontSize={11} allowDecimals={false} />
+              <YAxis type="category" dataKey="name" stroke={chartColors.axis} fontSize={11} width={90} />
+              <Tooltip contentStyle={{ ...tooltipStyle, padding: '8px 12px' }} cursor={{ fill: 'rgba(99,102,241,0.05)' }} />
               <Bar dataKey="value" radius={[0, 4, 4, 0]} fill="url(#authorGrad)" />
             </BarChart>
           </ResponsiveContainer>
@@ -1115,22 +1139,22 @@ function VelocityTab({ data }: { data: FetchResult }) {
                 href={commitUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-start gap-3 rounded-lg p-2.5 transition hover:bg-zinc-900/50 cursor-pointer"
+                className="flex items-start gap-3 rounded-lg p-2.5 transition hover:bg-zinc-100 dark:hover:bg-zinc-900/50 cursor-pointer"
               >
                 {avatar ? (
-                  <img src={avatar} alt={author} className="h-7 w-7 rounded-full border border-zinc-800 shrink-0" />
+                  <img src={avatar} alt={author} className="h-7 w-7 rounded-full border border-zinc-200 dark:border-zinc-800 shrink-0" />
                 ) : (
-                  <div className="h-7 w-7 rounded-full bg-zinc-800 grid place-items-center text-[10px] text-zinc-300 shrink-0">
+                  <div className="h-7 w-7 rounded-full bg-zinc-200 dark:bg-zinc-800 grid place-items-center text-[10px] text-zinc-500 dark:text-zinc-300 shrink-0">
                     {author.slice(0, 2).toUpperCase()}
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm text-zinc-200 truncate group-hover:text-white">{msg}</p>
-                  <p className="text-[11px] text-zinc-500">
+                  <p className="text-sm text-zinc-700 dark:text-zinc-200 truncate group-hover:text-zinc-900 dark:group-hover:text-white">{msg}</p>
+                  <p className="text-[11px] text-zinc-500 dark:text-zinc-500">
                     @{author} · {timeAgo(c.commit.author.date)}
                   </p>
                 </div>
-                <ChevronRight className="h-4 w-4 text-zinc-600 shrink-0 mt-1" />
+                <ChevronRight className="h-4 w-4 text-zinc-400 dark:text-zinc-600 shrink-0 mt-1" />
               </a>
             );
           })}
@@ -1221,8 +1245,8 @@ function PunchCardHeatmap({ owner, repo, className = '' }: { owner: string; repo
         </div>
       ) : totalCommits === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <Gauge className="h-8 w-8 text-zinc-700" />
-          <p className="mt-3 text-sm text-zinc-500">
+          <Gauge className="h-8 w-8 text-zinc-300 dark:text-zinc-700" />
+          <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-500">
             Not enough activity data to generate heatmap.
           </p>
         </div>
@@ -1230,11 +1254,11 @@ function PunchCardHeatmap({ owner, repo, className = '' }: { owner: string; repo
         <div className="space-y-3">
           {/* Legend */}
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <p className="text-[11px] text-zinc-500">
+            <p className="text-[11px] text-zinc-600 dark:text-zinc-500">
               {totalCommits.toLocaleString()} commits · Peak: {PUNCH_DAYS_FULL[peak.day]} at {formatHourLabel(peak.hour)} ({peak.count} commits)
             </p>
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-zinc-600">Less</span>
+              <span className="text-[10px] text-zinc-400 dark:text-zinc-600">Less</span>
               {[0.12, 0.3, 0.5, 0.7, 1].map((o) => (
                 <span
                   key={o}
@@ -1242,7 +1266,7 @@ function PunchCardHeatmap({ owner, repo, className = '' }: { owner: string; repo
                   style={{ opacity: o }}
                 />
               ))}
-              <span className="text-[10px] text-zinc-600">More</span>
+              <span className="text-[10px] text-zinc-400 dark:text-zinc-600">More</span>
             </div>
           </div>
 
@@ -1254,7 +1278,7 @@ function PunchCardHeatmap({ owner, repo, className = '' }: { owner: string; repo
                 {Array.from({ length: 24 }).map((_, h) => (
                   <div
                     key={h}
-                    className="flex-1 text-center text-[10px] text-zinc-500 font-medium"
+                    className="flex-1 text-center text-[10px] text-zinc-400 dark:text-zinc-500 font-medium"
                   >
                     {h % 6 === 0 ? formatHourShort(h) : ''}
                   </div>
@@ -1264,7 +1288,7 @@ function PunchCardHeatmap({ owner, repo, className = '' }: { owner: string; repo
               {/* Day rows */}
               {grid.map((row, day) => (
                 <div key={day} className="flex items-center mt-[2px]">
-                  <div className="w-10 shrink-0 text-[10px] font-medium text-zinc-500 text-right pr-2">
+                  <div className="w-10 shrink-0 text-[10px] font-medium text-zinc-400 dark:text-zinc-500 text-right pr-2">
                     {PUNCH_DAYS[day]}
                   </div>
                   <div className="flex flex-1 gap-[2px]">
@@ -1292,16 +1316,16 @@ function PunchCardHeatmap({ owner, repo, className = '' }: { owner: string; repo
                           <div
                             className={`absolute inset-0 rounded-[2px] transition-all duration-150 ${
                               isHovered ? 'ring-2 ring-indigo-300/60 scale-110 z-30' : ''
-                            } ${count === 0 ? 'bg-zinc-800/30' : ''}`}
+                            } ${count === 0 ? 'bg-zinc-200/50 dark:bg-zinc-800/30' : ''}`}
                             style={{
                               backgroundColor: count > 0 ? `rgba(99, 102, 241, ${op})` : undefined,
                             }}
                           />
                           {/* Tooltip on hover */}
                           {isHovered && (
-                            <div className={`absolute ${tooltipVerticalClass} ${tooltipHorizontalClass} z-[100] whitespace-nowrap rounded-lg bg-zinc-900 border border-zinc-800 shadow-xl px-2.5 py-1.5 text-[11px] text-zinc-200 pointer-events-none`}>
-                              <span className="text-zinc-100">{PUNCH_DAYS_FULL[day]} at {formatHourLabel(hour)}</span>
-                              <span className="text-zinc-500 mx-1">•</span>
+                            <div className={`absolute ${tooltipVerticalClass} ${tooltipHorizontalClass} z-[100] whitespace-nowrap rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl px-2.5 py-1.5 text-[11px] text-zinc-700 dark:text-zinc-200 pointer-events-none`}>
+                              <span className="text-zinc-900 dark:text-zinc-100">{PUNCH_DAYS_FULL[day]} at {formatHourLabel(hour)}</span>
+                              <span className="text-zinc-400 dark:text-zinc-500 mx-1">•</span>
                               <span className="text-indigo-400 font-medium">{count} commit{count !== 1 ? 's' : ''}</span>
                             </div>
                           )}
@@ -1317,7 +1341,7 @@ function PunchCardHeatmap({ owner, repo, className = '' }: { owner: string; repo
                 {Array.from({ length: 24 }).map((_, h) => (
                   <div
                     key={h}
-                    className="flex-1 text-center text-[10px] text-zinc-500 font-medium"
+                    className="flex-1 text-center text-[10px] text-zinc-400 dark:text-zinc-500 font-medium"
                   >
                     {formatHourShort(h)}
                   </div>
@@ -1327,7 +1351,7 @@ function PunchCardHeatmap({ owner, repo, className = '' }: { owner: string; repo
           </div>
 
           {error && (
-            <p className="text-[10px] text-zinc-600">
+            <p className="text-[10px] text-zinc-400 dark:text-zinc-600">
               Some data may be incomplete — {error}
             </p>
           )}
@@ -1346,6 +1370,8 @@ function formatChurnNumber(n: number): string {
 }
 
 function CodeChurnChart({ owner, repo, className = '' }: { owner: string; repo: string; className?: string }) {
+  const tooltipStyle = useTooltipStyle();
+  const chartColors = useChartColors();
   const [codeFreq, setCodeFreq] = useState<number[][]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1396,11 +1422,11 @@ function CodeChurnChart({ owner, repo, className = '' }: { owner: string; repo: 
     return (
       <Card title="Code Churn" subtitle="Weekly lines added vs. deleted over time." icon={GitCommitHorizontal} className={className}>
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <GitCommitHorizontal className="h-8 w-8 text-zinc-700" />
-          <p className="mt-3 text-sm text-zinc-500">
+          <GitCommitHorizontal className="h-8 w-8 text-zinc-300 dark:text-zinc-700" />
+          <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-500">
             Code churn data is currently unavailable for this repository.
           </p>
-          <p className="mt-1 text-[11px] text-zinc-600">
+          <p className="mt-1 text-[11px] text-zinc-400 dark:text-zinc-600">
             GitHub may still be generating the statistics. Try again shortly.
           </p>
         </div>
@@ -1415,18 +1441,18 @@ function CodeChurnChart({ owner, repo, className = '' }: { owner: string; repo: 
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500/80" />
-            <span className="text-[11px] text-zinc-400">
+            <span className="text-[11px] text-zinc-600 dark:text-zinc-400">
               <span className="font-medium text-emerald-400">{formatChurnNumber(totals.totalAdd)}</span> added
             </span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-sm bg-rose-500/80" />
-            <span className="text-[11px] text-zinc-400">
+            <span className="text-[11px] text-zinc-600 dark:text-zinc-400">
               <span className="font-medium text-rose-400">{formatChurnNumber(-totals.totalDel)}</span> deleted
             </span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="text-[11px] text-zinc-500">Net:</span>
+            <span className="text-[11px] text-zinc-500 dark:text-zinc-500">Net:</span>
             <span className={`text-[11px] font-medium ${totals.net >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
               {formatChurnNumber(totals.net)}
             </span>
@@ -1447,34 +1473,35 @@ function CodeChurnChart({ owner, repo, className = '' }: { owner: string; repo: 
                   <stop offset="100%" stopColor="#f43f5e" stopOpacity={0.9} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
+              <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
               <XAxis
                 dataKey="date"
-                stroke="#52525b"
+                stroke={chartColors.axis}
                 fontSize={10}
                 tickMargin={8}
                 interval="preserveStartEnd"
                 minTickGap={28}
               />
               <YAxis
-                stroke="#52525b"
+                stroke={chartColors.axis}
                 fontSize={10}
                 tickFormatter={(v: number) => formatChurnNumber(Math.abs(v))}
               />
               <Tooltip
-                contentStyle={TOOLTIP_STYLE}
-                labelStyle={{ color: '#e4e4e7', marginBottom: 4 }}
-                formatter={(value: number, name: string) => {
+                contentStyle={tooltipStyle}
+                labelStyle={{ color: chartColors.axis, marginBottom: 4 }}
+                formatter={(value, name) => {
+                  const v = Number(value);
                   if (name === 'additions') {
-                    return [formatChurnNumber(value), 'Lines Added'];
+                    return [formatChurnNumber(v), 'Lines Added'];
                   }
                   if (name === 'deletions') {
-                    return [formatChurnNumber(-value), 'Lines Deleted'];
+                    return [formatChurnNumber(-v), 'Lines Deleted'];
                   }
-                  return [formatChurnNumber(value), name];
+                  return [formatChurnNumber(v), name];
                 }}
               />
-              <ReferenceLine y={0} stroke="#52525b" strokeDasharray="2 2" />
+              <ReferenceLine y={0} stroke={chartColors.axis} strokeDasharray="2 2" />
               <Bar dataKey="additions" fill="url(#additionsGrad)" radius={[2, 2, 0, 0]} maxBarSize={16} />
               <Bar dataKey="deletions" fill="url(#deletionsGrad)" radius={[0, 0, 2, 2]} maxBarSize={16} />
             </ComposedChart>
@@ -1482,7 +1509,7 @@ function CodeChurnChart({ owner, repo, className = '' }: { owner: string; repo: 
         </div>
 
         {error && (
-          <p className="text-[10px] text-zinc-600">
+          <p className="text-[10px] text-zinc-400 dark:text-zinc-600">
             Some data may be incomplete — {error}
           </p>
         )}
@@ -1493,6 +1520,8 @@ function CodeChurnChart({ owner, repo, className = '' }: { owner: string; repo: 
 
 /* ---------- Tab 2: Issues & PRs ---------- */
 function IssuesTab({ data }: { data: FetchResult }) {
+  const tooltipStyle = useTooltipStyle();
+  const chartColors = useChartColors();
   const stats = useMemo(() => issueStats(data.issues), [data.issues]);
 
   if (data.issues.length === 0) {
@@ -1500,6 +1529,7 @@ function IssuesTab({ data }: { data: FetchResult }) {
   }
 
   const repo = data.repo;
+  if (!repo) return <ChartEmptyState icon={AlertCircle} message="No issues or pull requests found for this repository." />;
   const owner = repo.owner.login;
   const repoName = repo.name;
 
@@ -1520,11 +1550,11 @@ function IssuesTab({ data }: { data: FetchResult }) {
             <PieChart>
               <Pie data={issuePie} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={3}>
                 {issuePie.map((e) => (
-                  <Cell key={e.name} fill={e.color} stroke="#09090b" />
+                  <Cell key={e.name} fill={e.color} stroke={chartColors.pieStroke} />
                 ))}
               </Pie>
-              <Legend wrapperStyle={{ fontSize: 12 }} formatter={(v) => <span className="text-zinc-300">{v}</span>} />
-              <Tooltip contentStyle={TOOLTIP_STYLE} />
+              <Legend wrapperStyle={{ fontSize: 12 }} formatter={(v) => <span className="text-zinc-600 dark:text-zinc-300">{v}</span>} />
+              <Tooltip contentStyle={tooltipStyle} />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -1536,11 +1566,11 @@ function IssuesTab({ data }: { data: FetchResult }) {
             <PieChart>
               <Pie data={prPie} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={3}>
                 {prPie.map((e) => (
-                  <Cell key={e.name} fill={e.color} stroke="#09090b" />
+                  <Cell key={e.name} fill={e.color} stroke={chartColors.pieStroke} />
                 ))}
               </Pie>
-              <Legend wrapperStyle={{ fontSize: 12 }} formatter={(v) => <span className="text-zinc-300">{v}</span>} />
-              <Tooltip contentStyle={TOOLTIP_STYLE} />
+              <Legend wrapperStyle={{ fontSize: 12 }} formatter={(v) => <span className="text-zinc-600 dark:text-zinc-300">{v}</span>} />
+              <Tooltip contentStyle={tooltipStyle} />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -1574,12 +1604,12 @@ function Stat({
   icon: React.ComponentType<{ className?: string }>;
 }) {
   return (
-    <div className="flex flex-col p-4 rounded-xl border border-transparent hover:border-white/5 hover:bg-white/[0.02] transition-all duration-200">
-      <div className="flex items-center gap-1.5 text-sm text-zinc-400 font-medium mb-1.5">
-        <Icon className="h-3.5 w-3.5 text-zinc-400" />
+    <div className="flex flex-col p-4 rounded-xl border border-transparent hover:border-zinc-200 dark:hover:border-white/5 hover:bg-zinc-50 dark:hover:bg-white/[0.02] transition-all duration-200">
+      <div className="flex items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400 font-medium mb-1.5">
+        <Icon className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-400" />
         {label}
       </div>
-      <div className="text-2xl font-semibold text-white tracking-tight truncate">{value}</div>
+      <div className="text-2xl font-semibold text-zinc-900 dark:text-white tracking-tight truncate">{value}</div>
     </div>
   );
 }
@@ -1608,8 +1638,8 @@ function CommunityStandardsCard({ community }: { community: CommunityProfile | n
     <Card title="Community Standards" subtitle="Repository health checklist and community profile." icon={Heart} className="lg:col-span-2">
       {!community ? (
         <div className="flex flex-col items-center justify-center py-10 text-center">
-          <Heart className="h-8 w-8 text-zinc-700" />
-          <p className="mt-3 text-sm text-zinc-500">
+          <Heart className="h-8 w-8 text-zinc-300 dark:text-zinc-700" />
+          <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-500">
             Community profile data is not available for this repository.
           </p>
         </div>
@@ -1629,10 +1659,10 @@ function CommunityStandardsCard({ community }: { community: CommunityProfile | n
                 />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-lg font-semibold text-white">{pct}%</span>
+                <span className="text-lg font-semibold text-zinc-900 dark:text-white">{pct}%</span>
               </div>
             </div>
-            <span className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">Health</span>
+            <span className="text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">Health</span>
           </div>
 
           {/* Checklist grid */}
@@ -1643,14 +1673,14 @@ function CommunityStandardsCard({ community }: { community: CommunityProfile | n
                 <div
                   key={item.label}
                   className={present
-                    ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 rounded-lg p-3 flex items-center gap-2 text-sm'
-                    : 'bg-zinc-900/50 border border-zinc-800/60 text-zinc-400 rounded-lg p-3 flex items-center gap-2 text-sm'
+                    ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 rounded-lg p-3 flex items-center gap-2 text-sm'
+                    : 'bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800/60 text-zinc-600 dark:text-zinc-400 rounded-lg p-3 flex items-center gap-2 text-sm'
                   }
                 >
                   {present ? (
                     <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
                   ) : (
-                    <XCircle className="h-4 w-4 shrink-0 text-zinc-500" />
+                    <XCircle className="h-4 w-4 shrink-0 text-zinc-400 dark:text-zinc-500" />
                   )}
                   <span>{item.label}</span>
                 </div>
@@ -1743,17 +1773,17 @@ function ExecutiveHealthInsightsCard({ data }: { data: FetchResult }) {
             initial={{ opacity: 0, x: -8 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: i * 0.08 }}
-            className="flex items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3"
+            className="flex items-center gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/40 px-4 py-3"
           >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-zinc-700/50 bg-zinc-800/50">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-zinc-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-800/50">
               <insight.icon className={`h-4 w-4 ${insight.color}`} />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-baseline gap-2">
-                <span className="text-sm font-medium text-zinc-200">{insight.label}</span>
+                <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">{insight.label}</span>
                 <span className={`text-xs font-semibold ${insight.color}`}>{insight.level}</span>
               </div>
-              <p className="mt-0.5 text-[11px] text-zinc-500">{insight.detail}</p>
+              <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-500">{insight.detail}</p>
             </div>
           </motion.div>
         ))}
@@ -2009,7 +2039,7 @@ function StaleIssuesCard({ owner, repo }: { owner: string; repo: string }) {
 
   if (loading) {
     return (
-      <Card title="Issue Stale Backlog" subtitle="Open issues categorized by age to show triage activity." icon={Clock}>
+      <Card title="Issue Stale Backlog" subtitle="Open issues categorized by age to show triage activity." icon={Clock} className="lg:col-span-2">
         <div className="flex items-center justify-center py-16">
           <Loader2 className="h-5 w-5 animate-spin text-indigo-400" />
         </div>
@@ -2019,10 +2049,10 @@ function StaleIssuesCard({ owner, repo }: { owner: string; repo: string }) {
 
   if (total === 0) {
     return (
-      <Card title="Issue Stale Backlog" subtitle="Open issues categorized by age to show triage activity." icon={Clock}>
+      <Card title="Issue Stale Backlog" subtitle="Open issues categorized by age to show triage activity." icon={Clock} className="lg:col-span-2">
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <CheckCircle2 className="h-8 w-8 text-emerald-400" />
-          <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-500 text-zinc-400">
+          <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
             No open issues — the backlog is clear.
           </p>
         </div>
@@ -2031,7 +2061,7 @@ function StaleIssuesCard({ owner, repo }: { owner: string; repo: string }) {
   }
 
   return (
-    <Card title="Issue Stale Backlog" subtitle="Open issues categorized by age to show triage activity." icon={Clock}>
+    <Card title="Issue Stale Backlog" subtitle="Open issues categorized by age to show triage activity." icon={Clock} className="lg:col-span-2">
       <div className="flex flex-col gap-5">
         {/* Stacked horizontal bar */}
         <div className="flex h-3 w-full overflow-hidden rounded-full border border-zinc-200 dark:border-zinc-800">
@@ -2151,19 +2181,19 @@ function ContributorsTab({ data }: { data: FetchResult }) {
               src={c.avatar_url}
               alt={c.login}
               className={`h-11 w-11 rounded-full border-2 transition-all group-hover:scale-110 ${
-                i === 0 ? 'border-amber-400/60' : 'border-zinc-700 group-hover:border-zinc-500'
+                i === 0 ? 'border-amber-400/60' : 'border-zinc-300 dark:border-zinc-700 group-hover:border-zinc-400 dark:group-hover:border-zinc-500'
               }`
               }
             />
             {i === 0 && (
-              <span className="absolute top-0 left-0 flex h-4 w-4 items-center justify-center rounded-full bg-amber-400 text-[9px] font-bold text-black ring-2 ring-zinc-950">
+              <span className="absolute top-0 left-0 flex h-4 w-4 items-center justify-center rounded-full bg-amber-400 text-[9px] font-bold text-black ring-2 ring-white dark:ring-zinc-950">
                 1
               </span>
             )}
           </a>
         ))}
         {data.contributors.length > 8 && (
-          <span className="shrink-0 pl-1 text-xs text-zinc-500">
+          <span className="shrink-0 pl-1 text-xs text-zinc-500 dark:text-zinc-500">
             +{data.contributors.length - 8} more
           </span>
         )}
@@ -2174,32 +2204,32 @@ function ContributorsTab({ data }: { data: FetchResult }) {
           <div className="flex items-center gap-3">
             <ShieldAlert className={`h-6 w-6 ${riskColor}`} />
             <div>
-              <h3 className="text-sm font-semibold text-zinc-100">Bus Factor Risk Score</h3>
-              <p className="text-[11px] text-zinc-500">
+              <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Bus Factor Risk Score</h3>
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-500">
                 Concentration of contribution ownership
               </p>
             </div>
           </div>
           <div className="text-right">
-            <div className={`tracking-tight font-bold text-3xl ${riskColor}`}>{bf.score}<span className="text-base text-zinc-600">/100</span></div>
+            <div className={`tracking-tight font-bold text-3xl ${riskColor}`}>{bf.score}<span className="text-base text-zinc-400 dark:text-zinc-600">/100</span></div>
             <div className={`text-xs font-medium ${riskColor}`}>{bf.label} Risk</div>
           </div>
         </div>
         <div className="mt-4 grid grid-cols-3 gap-3 text-center">
           <div>
-            <div className="text-[10px] uppercase text-zinc-500">Top Contributor</div>
-            <div className="text-sm font-medium text-zinc-100 truncate">@{bf.topContributor}</div>
+            <div className="text-[10px] uppercase text-zinc-500 dark:text-zinc-500">Top Contributor</div>
+            <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">@{bf.topContributor}</div>
           </div>
           <div>
-            <div className="text-[10px] uppercase text-zinc-500">Top Share</div>
-            <div className="text-sm font-medium text-zinc-100">{(bf.topShare * 100).toFixed(1)}%</div>
+            <div className="text-[10px] uppercase text-zinc-500 dark:text-zinc-500">Top Share</div>
+            <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{(bf.topShare * 100).toFixed(1)}%</div>
           </div>
           <div>
-            <div className="text-[10px] uppercase text-zinc-500">Contributors</div>
-            <div className="text-sm font-medium text-zinc-100">{bf.totalContributors}</div>
+            <div className="text-[10px] uppercase text-zinc-500 dark:text-zinc-500">Contributors</div>
+            <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{bf.totalContributors}</div>
           </div>
         </div>
-        <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-zinc-800">
+        <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
           <div
             className={`h-full rounded-full ${riskBar}`}
             style={{ width: `${bf.score}%` }}
@@ -2219,15 +2249,15 @@ function ContributorsTab({ data }: { data: FetchResult }) {
               initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.04 }}
-              className="group block rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 backdrop-blur-sm transition hover:border-zinc-700 hover:bg-zinc-900"
+              className="group block rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-4 backdrop-blur-sm transition hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-900"
             >
               <div className="flex items-center gap-3">
-                <img src={c.avatar_url} alt={c.login} className="h-10 w-10 rounded-full border border-zinc-800" />
+                <img src={c.avatar_url} alt={c.login} className="h-10 w-10 rounded-full border border-zinc-200 dark:border-zinc-800" />
                 <div className="min-w-0 flex-1">
-                  <span className="text-sm font-medium text-zinc-100 group-hover:text-white truncate block">
+                  <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100 group-hover:text-indigo-600 dark:group-hover:text-white truncate block">
                     @{c.login}
                   </span>
-                  <p className="text-[11px] text-zinc-500">{c.type}</p>
+                  <p className="text-[11px] text-zinc-500 dark:text-zinc-500">{c.type}</p>
                 </div>
                 {i === 0 && (
                   <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-black">
@@ -2235,13 +2265,13 @@ function ContributorsTab({ data }: { data: FetchResult }) {
                   </span>
                 )}
               </div>
-              <div className="mt-3 flex items-center justify-between text-[11px] text-zinc-400">
+              <div className="mt-3 flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
                 <span>{formatNumber(c.contributions)} commits</span>
-                <span className="text-zinc-500">{share.toFixed(1)}%</span>
+                <span className="text-zinc-400 dark:text-zinc-500">{share.toFixed(1)}%</span>
               </div>
-              <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-zinc-800">
+              <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-zinc-300"
+                  className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-indigo-400"
                   style={{ width: `${Math.max(2, share)}%` }}
                 />
               </div>
@@ -2255,8 +2285,10 @@ function ContributorsTab({ data }: { data: FetchResult }) {
 
 /* ---------- Tab 4: Languages ---------- */
 function LanguagesTab({ data }: { data: FetchResult }) {
+  const tooltipStyle = useTooltipStyle();
+  const chartColors = useChartColors();
   const entries = useMemo(
-    () => Object.entries(data.languages).sort((a, b) => b[1] - a[1]),
+    () => Object.entries(data.languages ?? {}).sort((a, b) => b[1] - a[1]),
     [data.languages]
   );
   const total = useMemo(
@@ -2280,15 +2312,15 @@ function LanguagesTab({ data }: { data: FetchResult }) {
             <PieChart>
               <Pie data={pieData} dataKey="value" nameKey="name" innerRadius={60} outerRadius={110} paddingAngle={2}>
                 {pieData.map((e) => (
-                  <Cell key={e.name} fill={e.color} stroke="#09090b" />
+                  <Cell key={e.name} fill={e.color} stroke={chartColors.pieStroke} />
                 ))}
               </Pie>
               <Legend
                 wrapperStyle={{ fontSize: 11 }}
-                formatter={(value) => <span className="text-zinc-300">{value}</span>}
+                formatter={(value) => <span className="text-zinc-600 dark:text-zinc-300">{value}</span>}
               />
               <Tooltip
-                contentStyle={TOOLTIP_STYLE}
+                contentStyle={tooltipStyle}
                 formatter={(value) => `${((Number(value) / total) * 100).toFixed(1)}%`}
               />
             </PieChart>
@@ -2303,13 +2335,13 @@ function LanguagesTab({ data }: { data: FetchResult }) {
             return (
               <div key={name}>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-2 text-zinc-200">
+                  <span className="flex items-center gap-2 text-zinc-700 dark:text-zinc-200">
                     <span className="h-2.5 w-2.5 rounded-full" style={{ background: languageColor(name) }} />
                     {name}
                   </span>
-                  <span className="text-zinc-400">{pct.toFixed(1)}%</span>
+                  <span className="text-zinc-500 dark:text-zinc-400">{pct.toFixed(1)}%</span>
                 </div>
-                <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-zinc-800">
+                <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
                   <div
                     className="h-full rounded-full"
                     style={{ width: `${pct}%`, background: languageColor(name) }}
@@ -2324,7 +2356,7 @@ function LanguagesTab({ data }: { data: FetchResult }) {
       <DependenciesCard deps={data.dependencies} className="lg:col-span-2" />
 
       <Card title="Language Proportions" subtitle="Relative codebase composition at a glance." icon={Code2} className="lg:col-span-2">
-        <div className="flex h-4 w-full overflow-hidden rounded-full border border-zinc-800">
+        <div className="flex h-4 w-full overflow-hidden rounded-full border border-zinc-200 dark:border-zinc-800">
           {entries.map(([name, bytes]) => {
             const pct = (bytes / total) * 100;
             if (pct < 0.5) return null;
@@ -2358,8 +2390,8 @@ function DependenciesCard({ deps, className = '' }: { deps: FetchResult['depende
     return (
       <Card title="Core Dependencies" subtitle="Production and development package dependencies." icon={Package} className={className}>
         <div className="flex flex-col items-center justify-center py-10 text-center">
-          <Package className="h-8 w-8 text-zinc-700" />
-          <p className="mt-3 text-sm text-zinc-500">
+          <Package className="h-8 w-8 text-zinc-300 dark:text-zinc-700" />
+          <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-500">
             No package.json found — this may not be a JavaScript/TypeScript project.
           </p>
         </div>
@@ -2372,15 +2404,15 @@ function DependenciesCard({ deps, className = '' }: { deps: FetchResult['depende
       <div className="space-y-4">
         {depEntries.length > 0 && (
           <div>
-            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500">Dependencies</p>
+            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">Dependencies</p>
             <div className="flex flex-wrap gap-2">
               {depEntries.map(([name, version]) => (
                 <span
                   key={name}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-zinc-800/50 px-3 py-1 text-sm text-zinc-300 transition hover:bg-zinc-800/80"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800/50 px-3 py-1 text-sm text-zinc-700 dark:text-zinc-300 transition hover:bg-zinc-200 dark:hover:bg-zinc-800/80"
                 >
                   {name}
-                  <span className="text-zinc-500">{version.replace(/[\^~]/, '')}</span>
+                  <span className="text-zinc-400 dark:text-zinc-500">{version.replace(/[\^~]/, '')}</span>
                 </span>
               ))}
             </div>
@@ -2388,19 +2420,19 @@ function DependenciesCard({ deps, className = '' }: { deps: FetchResult['depende
         )}
         {devEntries.length > 0 && (
           <div>
-            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500">Dev Dependencies</p>
+            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">Dev Dependencies</p>
             <div className="flex flex-wrap gap-2">
               {devEntries.slice(0, 20).map(([name, version]) => (
                 <span
                   key={name}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-zinc-800/30 px-3 py-1 text-sm text-zinc-400 transition hover:bg-zinc-800/50"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100/70 dark:bg-zinc-800/30 px-3 py-1 text-sm text-zinc-600 dark:text-zinc-400 transition hover:bg-zinc-200 dark:hover:bg-zinc-800/50"
                 >
                   {name}
-                  <span className="text-zinc-600">{version.replace(/[\^~]/, '')}</span>
+                  <span className="text-zinc-400 dark:text-zinc-600">{version.replace(/[\^~]/, '')}</span>
                 </span>
               ))}
               {devEntries.length > 20 && (
-                <span className="inline-flex items-center rounded-full bg-zinc-800/20 px-3 py-1 text-sm text-zinc-500">
+                <span className="inline-flex items-center rounded-full bg-zinc-100/50 dark:bg-zinc-800/20 px-3 py-1 text-sm text-zinc-500 dark:text-zinc-500">
                   +{devEntries.length - 20} more
                 </span>
               )}
@@ -2453,16 +2485,16 @@ function AuthModal({
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-[95vw] sm:w-full sm:max-w-sm max-h-[85vh] overflow-y-auto rounded-2xl border border-zinc-800 bg-zinc-900 shadow-2xl"
+        className="relative w-[95vw] sm:w-full sm:max-w-sm max-h-[85vh] overflow-y-auto rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl"
       >
-        <div className="flex items-center justify-between border-b border-zinc-800 p-4">
+        <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 p-4">
           <div className="flex items-center gap-2">
             <LogoIcon className="h-4 w-4" />
-            <h3 className="text-sm font-semibold text-zinc-100">
+            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
               {mode === 'signin' ? 'Sign In' : 'Create Account'}
             </h3>
           </div>
-          <button onClick={onClose} className="text-zinc-500 hover:text-zinc-100 transition">
+          <button onClick={onClose} className="text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -2471,23 +2503,23 @@ function AuthModal({
           {/* Email/password form */}
           <form onSubmit={submit} className="space-y-3">
             <div className="space-y-1.5">
-              <label className="text-[11px] text-zinc-500">Email</label>
+              <label className="text-[11px] text-zinc-600 dark:text-zinc-500">Email</label>
               <div className="relative">
-                <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+                <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400 dark:text-zinc-500" />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="w-full rounded-xl border border-zinc-800 bg-zinc-950 py-2.5 pl-10 pr-3 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none transition focus:border-zinc-600 focus:ring-2 focus:ring-indigo-500/20"
+                  className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 py-2.5 pl-10 pr-3 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 outline-none transition focus:border-indigo-500/50 dark:focus:border-zinc-600 focus:ring-2 focus:ring-indigo-500/20"
                 />
               </div>
             </div>
             <div className="space-y-1.5">
-              <label className="text-[11px] text-zinc-500">Password</label>
+              <label className="text-[11px] text-zinc-600 dark:text-zinc-500">Password</label>
               <div className="relative">
-                <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+                <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400 dark:text-zinc-500" />
                 <input
                   type="password"
                   required
@@ -2495,31 +2527,31 @@ function AuthModal({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full rounded-xl border border-zinc-800 bg-zinc-950 py-2.5 pl-10 pr-3 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none transition focus:border-zinc-600 focus:ring-2 focus:ring-indigo-500/20"
+                  className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 py-2.5 pl-10 pr-3 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 outline-none transition focus:border-indigo-500/50 dark:focus:border-zinc-600 focus:ring-2 focus:ring-indigo-500/20"
                 />
               </div>
             </div>
             {error && (
-              <p className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs text-rose-300">
+              <p className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs text-rose-500 dark:text-rose-300">
                 {error}
               </p>
             )}
             <button
               type="submit"
               disabled={submitting}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-white py-2.5 text-sm font-medium text-black transition hover:bg-zinc-200 disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-50"
             >
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
               {mode === 'signin' ? 'Sign In' : 'Create Account'}
             </button>
           </form>
 
-          <p className="text-center text-xs text-zinc-500">
+          <p className="text-center text-xs text-zinc-500 dark:text-zinc-500">
             {mode === 'signin' ? "Don't have an account?" : 'Already have an account?'}{' '}
             <button
               type="button"
               onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(null); }}
-              className="font-medium text-zinc-300 hover:text-white transition"
+              className="font-medium text-indigo-600 dark:text-zinc-300 hover:text-indigo-700 dark:hover:text-white transition"
             >
               {mode === 'signin' ? 'Sign up' : 'Sign in'}
             </button>
@@ -2614,25 +2646,25 @@ function ProfileModal({
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-[95vw] sm:w-full sm:max-w-md max-h-[85vh] overflow-y-auto rounded-2xl border border-white/10 bg-zinc-950/90 backdrop-blur-2xl shadow-2xl p-5"
+        className="relative w-[95vw] sm:w-full sm:max-w-md max-h-[85vh] overflow-y-auto rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-950/90 backdrop-blur-2xl shadow-2xl p-5"
       >
         {/* Header: avatar + email */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <span className="grid h-12 w-12 place-items-center rounded-full bg-gradient-to-br from-zinc-700 to-zinc-900 text-base font-semibold text-zinc-100">
+            <span className="grid h-12 w-12 place-items-center rounded-full bg-gradient-to-br from-zinc-300 to-zinc-400 dark:from-zinc-700 dark:to-zinc-900 text-base font-semibold text-zinc-700 dark:text-zinc-100">
               {initial}
             </span>
             <div className="min-w-0">
-              <p className="text-sm font-medium tracking-tight text-white truncate">{user?.email}</p>
+              <p className="text-sm font-medium tracking-tight text-zinc-900 dark:text-white truncate">{user?.email}</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-zinc-500 hover:text-zinc-100 transition shrink-0">
+          <button onClick={onClose} className="text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition shrink-0">
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Segmented control */}
-        <div className="mt-5 flex gap-1 rounded-xl border border-white/10 bg-zinc-900/50 p-1">
+        <div className="mt-5 flex gap-1 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-100 dark:bg-zinc-900/50 p-1">
           {([
             { id: 'bookmarks', label: 'Bookmarks', icon: Bookmark, count: bookmarkItems.length },
             { id: 'audits', label: 'Saved Audits', icon: Archive, count: reports.length },
@@ -2643,20 +2675,20 @@ function ProfileModal({
                 key={seg.id}
                 onClick={() => setSegment(seg.id)}
                 className={`relative flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-medium transition ${
-                  active ? 'text-white' : 'text-zinc-400 hover:text-zinc-200'
+                  active ? 'text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'
                 }`}
               >
                 {active && (
                   <motion.div
                     layoutId="profile-seg"
-                    className="absolute inset-0 rounded-lg bg-white/10"
+                    className="absolute inset-0 rounded-lg bg-zinc-200 dark:bg-white/10"
                     transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                   />
                 )}
                 <seg.icon className="relative h-3.5 w-3.5" />
                 <span className="relative">{seg.label}</span>
                 {seg.count > 0 && (
-                  <span className="relative rounded-full bg-white/10 px-1.5 py-0.5 text-[10px] text-zinc-300">
+                  <span className="relative rounded-full bg-zinc-200 dark:bg-white/10 px-1.5 py-0.5 text-[10px] text-zinc-600 dark:text-zinc-300">
                     {seg.count}
                   </span>
                 )}
@@ -2683,15 +2715,15 @@ function ProfileModal({
                     {bookmarkItems.map((b) => (
                       <div
                         key={b}
-                        className="group flex items-center justify-between rounded-xl p-3 transition-all hover:bg-white/5"
+                        className="group flex items-center justify-between rounded-xl p-3 transition-all hover:bg-zinc-100 dark:hover:bg-white/5"
                       >
                         <span className="flex items-center gap-2.5 min-w-0">
-                          <Github className="h-4 w-4 text-zinc-600 shrink-0" />
-                          <span className="truncate text-sm text-zinc-200">{b}</span>
+                          <Github className="h-4 w-4 text-zinc-400 dark:text-zinc-600 shrink-0" />
+                          <span className="truncate text-sm text-zinc-700 dark:text-zinc-200">{b}</span>
                         </span>
                         <button
                           onClick={() => deleteBookmark(b)}
-                          className="shrink-0 text-zinc-600 opacity-0 transition hover:text-rose-400 group-hover:opacity-100"
+                          className="shrink-0 text-zinc-400 dark:text-zinc-600 opacity-0 transition hover:text-rose-400 group-hover:opacity-100"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -2712,7 +2744,7 @@ function ProfileModal({
               >
                 {loadingReports ? (
                   <div className="flex items-center justify-center py-10">
-                    <Loader2 className="h-5 w-5 animate-spin text-zinc-600" />
+                    <Loader2 className="h-5 w-5 animate-spin text-zinc-400 dark:text-zinc-600" />
                   </div>
                 ) : reports.length === 0 ? (
                   <ProfileEmptyState icon={Archive} message="No saved audits yet" />
@@ -2721,11 +2753,11 @@ function ProfileModal({
                     {reports.map((r) => (
                       <div
                         key={r.id}
-                        className="group flex items-center justify-between rounded-xl p-3 transition-all hover:bg-white/5"
+                        className="group flex items-center justify-between rounded-xl p-3 transition-all hover:bg-zinc-100 dark:hover:bg-white/5"
                       >
                         <div className="min-w-0">
-                          <p className="truncate text-sm text-zinc-200">{r.repo_full_name}</p>
-                          <p className="text-[11px] text-zinc-600">
+                          <p className="truncate text-sm text-zinc-700 dark:text-zinc-200">{r.repo_full_name}</p>
+                          <p className="text-[11px] text-zinc-400 dark:text-zinc-600">
                             {timeAgo(r.created_at)}
                             {r.health_score !== null && ` · Score ${r.health_score}/100`}
                           </p>
@@ -2733,14 +2765,14 @@ function ProfileModal({
                         <div className="flex shrink-0 items-center gap-1 opacity-0 transition group-hover:opacity-100">
                           <button
                             onClick={() => downloadReport(r.storage_path, r.file_name)}
-                            className="grid h-7 w-7 place-items-center rounded-md text-zinc-500 transition hover:bg-white/10 hover:text-zinc-200"
+                            className="grid h-7 w-7 place-items-center rounded-md text-zinc-400 dark:text-zinc-500 transition hover:bg-zinc-200 dark:hover:bg-white/10 hover:text-zinc-900 dark:hover:text-zinc-200"
                             title="Download"
                           >
                             <Download className="h-3.5 w-3.5" />
                           </button>
                           <button
                             onClick={() => deleteReport(r.id, r.storage_path)}
-                            className="grid h-7 w-7 place-items-center rounded-md text-zinc-600 transition hover:bg-rose-500/10 hover:text-rose-400"
+                            className="grid h-7 w-7 place-items-center rounded-md text-zinc-400 dark:text-zinc-600 transition hover:bg-rose-500/10 hover:text-rose-400"
                             title="Delete"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -2813,43 +2845,43 @@ function SettingsModal({
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-[95vw] sm:w-full sm:max-w-md max-h-[85vh] overflow-y-auto rounded-2xl border border-zinc-800 bg-zinc-900 shadow-2xl"
+        className="relative w-[95vw] sm:w-full sm:max-w-md max-h-[85vh] overflow-y-auto rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl"
       >
-        <div className="flex items-center justify-between border-b border-zinc-800 p-4">
+        <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 p-4">
           <div className="flex items-center gap-2">
-            <KeyRound className="h-4 w-4 text-zinc-300" />
-            <h3 className="text-sm font-semibold text-zinc-100">API Configuration</h3>
+            <KeyRound className="h-4 w-4 text-zinc-600 dark:text-zinc-300" />
+            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">API Configuration</h3>
           </div>
-          <button onClick={onClose} className="text-zinc-500 hover:text-zinc-100 transition">
+          <button onClick={onClose} className="text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition">
             <X className="h-5 w-5" />
           </button>
         </div>
         <div className="p-4 space-y-3">
           <div className="space-y-1.5">
-            <label className="text-[11px] text-zinc-500">GitHub Personal Access Token (PAT)</label>
+            <label className="text-[11px] text-zinc-600 dark:text-zinc-500">GitHub Personal Access Token (PAT)</label>
             <input
               type="password"
               value={token}
               onChange={(e) => setToken(e.target.value)}
               placeholder="ghp_..."
-              className="w-full rounded-xl border border-zinc-800 bg-zinc-950 py-2.5 px-3 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none transition focus:border-zinc-600 focus:ring-2 focus:ring-indigo-500/20"
+              className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 py-2.5 px-3 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 outline-none transition focus:border-indigo-500/50 dark:focus:border-zinc-600 focus:ring-2 focus:ring-indigo-500/20"
             />
           </div>
-          <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-3 text-[11px] leading-relaxed text-zinc-500">
+          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-3 text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-500">
             Unauthenticated requests are limited to 60/hr. Paste a GitHub PAT here to increase your limit to 5,000/hr. This token is stored locally in your browser.
           </div>
           <div className="flex items-center justify-between gap-2 pt-1">
             {token && (
               <button
                 onClick={clear}
-                className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-400 transition hover:bg-zinc-800"
+                className="flex items-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-600 dark:text-zinc-400 transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
               >
                 <Trash2 className="h-3.5 w-3.5" /> Remove
               </button>
             )}
             <button
               onClick={save}
-              className="ml-auto flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-xs font-medium text-black transition hover:bg-zinc-200"
+              className="ml-auto flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-medium text-white transition hover:bg-indigo-700"
             >
               {saved ? <CheckCircle2 className="h-3.5 w-3.5" /> : <KeyRound className="h-3.5 w-3.5" />}
               {saved ? 'Saved' : 'Save Token'}
@@ -2875,7 +2907,7 @@ function LoadingState() {
       className="mt-6 space-y-4"
     >
       {/* Vitals banner skeleton */}
-      <div className="overflow-hidden rounded-2xl border border-zinc-800/50">
+      <div className="overflow-hidden rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50">
         <div className="flex items-center gap-4 p-5 sm:p-6">
           <SkeletonBox className="h-14 w-14 !rounded-xl" />
           <div className="flex-1 space-y-2">
@@ -2883,7 +2915,7 @@ function LoadingState() {
             <SkeletonBox className="h-3 w-72 !rounded-lg" />
           </div>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 w-full px-5 sm:px-6 pb-5 sm:pb-6 pt-4 border-t border-zinc-800/50">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 w-full px-5 sm:px-6 pb-5 sm:pb-6 pt-4 border-t border-zinc-200/50 dark:border-zinc-800/50">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="flex flex-col justify-center rounded-lg px-2 py-1.5">
               <SkeletonBox className="h-3 w-16 !rounded-lg" />
@@ -2894,7 +2926,7 @@ function LoadingState() {
       </div>
 
       {/* Tab bar skeleton */}
-      <div className="flex gap-4 overflow-x-auto no-scrollbar border-b border-zinc-800/50 pb-px">
+      <div className="flex gap-4 overflow-x-auto no-scrollbar border-b border-zinc-200/50 dark:border-zinc-800/50 pb-px">
         {Array.from({ length: 4 }).map((_, i) => (
           <SkeletonBox key={i} className="h-9 w-32 shrink-0 !rounded-lg" />
         ))}
@@ -2924,21 +2956,21 @@ function ErrorState({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
-      className="mt-10 flex flex-col items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-900/50 p-10 text-center backdrop-blur-sm"
+      className="mt-10 flex flex-col items-center justify-center rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-10 text-center backdrop-blur-sm"
     >
       {is404 ? (
-        <Search className="h-10 w-10 text-zinc-600" />
+        <Search className="h-10 w-10 text-zinc-400 dark:text-zinc-600" />
       ) : (
         <AlertTriangle className="h-10 w-10 text-amber-400" />
       )}
-      <h3 className="mt-4 text-lg font-semibold text-zinc-100">
+      <h3 className="mt-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
         {is404
           ? 'Repository not found'
           : isRateLimit
             ? 'GitHub API Rate Limit Reached'
             : "Couldn't load repository"}
       </h3>
-      <p className="mt-1 max-w-md text-sm text-zinc-400">
+      <p className="mt-1 max-w-md text-sm text-zinc-600 dark:text-zinc-400">
         {is404
           ? 'Please check the spelling or try a public repository.'
           : message}
@@ -2946,7 +2978,7 @@ function ErrorState({
       {isRateLimit && (
         <button
           onClick={onAddToken}
-          className="mt-5 flex items-center gap-2 rounded-xl border border-indigo-500/40 bg-indigo-500/10 px-4 py-2.5 text-sm font-medium text-indigo-300 transition hover:bg-indigo-500/20"
+          className="mt-5 flex items-center gap-2 rounded-xl border border-indigo-500/40 bg-indigo-500/10 px-4 py-2.5 text-sm font-medium text-indigo-600 dark:text-indigo-300 transition hover:bg-indigo-500/20"
         >
           <KeyRound className="h-4 w-4" /> Add API Token
         </button>
@@ -2963,9 +2995,9 @@ function ChartEmptyState({
   message: string;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-900/50 p-12 text-center backdrop-blur-sm">
-      <Icon className="h-8 w-8 text-zinc-600" />
-      <p className="mt-3 text-sm text-zinc-400">{message}</p>
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-12 text-center backdrop-blur-sm">
+      <Icon className="h-8 w-8 text-zinc-400 dark:text-zinc-600" />
+      <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">{message}</p>
     </div>
   );
 }
@@ -2979,10 +3011,10 @@ function ProfileEmptyState({
 }) {
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
-      <div className="grid h-12 w-12 place-items-center rounded-2xl border border-white/5 bg-white/[0.02]">
-        <Icon className="h-5 w-5 text-zinc-600" />
+      <div className="grid h-12 w-12 place-items-center rounded-2xl border border-zinc-200 dark:border-white/5 bg-zinc-50 dark:bg-white/[0.02]">
+        <Icon className="h-5 w-5 text-zinc-400 dark:text-zinc-600" />
       </div>
-      <p className="mt-3 text-xs text-zinc-600">{message}</p>
+      <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-600">{message}</p>
     </div>
   );
 }
@@ -2990,18 +3022,18 @@ function ProfileEmptyState({
 /* ---------- Footer ---------- */
 function Footer() {
   return (
-    <footer className="border-t border-zinc-800/50 py-6">
+    <footer className="border-t border-zinc-200/50 dark:border-zinc-800/50 py-6">
       <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 sm:flex-row sm:px-6 lg:px-8">
-        <p className="text-sm text-zinc-600">
+        <p className="text-sm text-zinc-400 dark:text-zinc-600">
           GitDeck — Repository Intelligence. Designed &amp; Built by{' '}
-          <span className="text-zinc-400">Mire</span>.
+          <span className="text-zinc-600 dark:text-zinc-400">Mire</span>.
         </p>
         <div className="flex items-center gap-3">
           <a
             href="https://github.com/mirepatel"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-zinc-600 transition hover:text-zinc-300"
+            className="text-zinc-400 dark:text-zinc-600 transition hover:text-zinc-900 dark:hover:text-zinc-300"
             aria-label="GitHub Profile"
           >
             <GithubFilledIcon className="h-4 w-4" />
@@ -3010,7 +3042,7 @@ function Footer() {
             href="https://www.linkedin.com/in/mirepatel"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-zinc-600 transition hover:text-zinc-300"
+            className="text-zinc-400 dark:text-zinc-600 transition hover:text-zinc-900 dark:hover:text-zinc-300"
             aria-label="LinkedIn Profile"
           >
             <LinkedinIcon className="h-4 w-4" />
@@ -3200,9 +3232,9 @@ function Toast({ message }: { message: string | null }) {
           initial={{ opacity: 0, y: 20, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 20, scale: 0.95 }}
-          className="fixed bottom-6 left-1/2 z-[60] -translate-x-1/2 rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 shadow-2xl backdrop-blur-sm"
+          className="fixed bottom-6 left-1/2 z-[60] -translate-x-1/2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-2.5 shadow-2xl backdrop-blur-sm"
         >
-          <div className="flex items-center gap-2 text-sm text-zinc-100">
+          <div className="flex items-center gap-2 text-sm text-zinc-900 dark:text-zinc-100">
             <CheckCircle2 className="h-4 w-4 text-emerald-400" />
             {message}
           </div>
@@ -3239,31 +3271,31 @@ function ReportModal({
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-[95vw] sm:w-full sm:max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl border border-zinc-800 bg-zinc-900 shadow-2xl"
+        className="relative w-[95vw] sm:w-full sm:max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl"
       >
-        <div className="flex items-center justify-between border-b border-zinc-800 p-4">
+        <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 p-4">
           <div className="flex items-center gap-2">
-            <FileCode2 className="h-4 w-4 text-zinc-300" />
-            <h3 className="text-sm font-semibold text-zinc-100">GitDeck Health Audit Report</h3>
+            <FileCode2 className="h-4 w-4 text-zinc-600 dark:text-zinc-300" />
+            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">GitDeck Health Audit Report</h3>
           </div>
-          <button onClick={onClose} className="text-zinc-500 hover:text-zinc-100 transition">
+          <button onClick={onClose} className="text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition">
             <X className="h-5 w-5" />
           </button>
         </div>
         <div className="max-h-[60vh] overflow-y-auto p-4">
-          <pre className="whitespace-pre-wrap break-words rounded-xl border border-zinc-800 bg-black/40 p-4 text-[11px] leading-relaxed text-zinc-300 font-mono">
+          <pre className="whitespace-pre-wrap break-words rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-black/40 p-4 text-[11px] leading-relaxed text-zinc-700 dark:text-zinc-300 font-mono">
             {text}
           </pre>
         </div>
-        <div className="flex flex-wrap items-center justify-end gap-2 border-t border-zinc-800 p-4">
+        <div className="flex flex-wrap items-center justify-end gap-2 border-t border-zinc-200 dark:border-zinc-800 p-4">
           {/* Export dropdown */}
           <div className="relative">
             <button
               onClick={() => setExportOpen((v) => !v)}
-              className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-200 transition hover:bg-zinc-800"
+              className="flex items-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-700 dark:text-zinc-200 transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
             >
               <Download className="h-3.5 w-3.5" /> Export
-              <ChevronDownIcon className="h-3 w-3 text-zinc-500" />
+              <ChevronDownIcon className="h-3 w-3 text-zinc-400 dark:text-zinc-500" />
             </button>
             <AnimatePresence>
               {exportOpen && (
@@ -3273,25 +3305,25 @@ function ReportModal({
                     initial={{ opacity: 0, y: -6, scale: 0.96 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -6, scale: 0.96 }}
-                    className="absolute bottom-full mb-2 right-0 z-50 w-44 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 shadow-2xl"
+                    className="absolute bottom-full mb-2 right-0 z-50 w-44 overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl"
                   >
                     <button
                       onClick={() => { setExportOpen(false); onDownload('md'); }}
-                      className="flex w-full items-center gap-2.5 px-3 py-2.5 text-xs text-zinc-200 transition hover:bg-zinc-800"
+                      className="flex w-full items-center gap-2.5 px-3 py-2.5 text-xs text-zinc-700 dark:text-zinc-200 transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
                     >
-                      <FileCode2 className="h-4 w-4 text-zinc-400" /> Markdown (.md)
+                      <FileCode2 className="h-4 w-4 text-zinc-400 dark:text-zinc-400" /> Markdown (.md)
                     </button>
                     <button
                       onClick={() => { setExportOpen(false); onDownload('json'); }}
-                      className="flex w-full items-center gap-2.5 px-3 py-2.5 text-xs text-zinc-200 transition hover:bg-zinc-800"
+                      className="flex w-full items-center gap-2.5 px-3 py-2.5 text-xs text-zinc-700 dark:text-zinc-200 transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
                     >
-                      <FileJson className="h-4 w-4 text-zinc-400" /> JSON (.json)
+                      <FileJson className="h-4 w-4 text-zinc-400 dark:text-zinc-400" /> JSON (.json)
                     </button>
                     <button
                       onClick={() => { setExportOpen(false); onDownload('pdf'); }}
-                      className="flex w-full items-center gap-2.5 px-3 py-2.5 text-xs text-zinc-200 transition hover:bg-zinc-800"
+                      className="flex w-full items-center gap-2.5 px-3 py-2.5 text-xs text-zinc-700 dark:text-zinc-200 transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
                     >
-                      <FileType className="h-4 w-4 text-zinc-400" /> PDF (.pdf)
+                      <FileType className="h-4 w-4 text-zinc-400 dark:text-zinc-400" /> PDF (.pdf)
                     </button>
                   </motion.div>
                 </>
@@ -3302,13 +3334,13 @@ function ReportModal({
             onClick={onSaveToStorage}
             disabled={!canSaveToStorage}
             title={canSaveToStorage ? 'Save to your archive' : 'Sign in to save'}
-            className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-200 transition hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-700 dark:text-zinc-200 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Archive className="h-3.5 w-3.5" /> Save to Storage
           </button>
           <button
             onClick={onCopy}
-            className="flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-xs font-medium text-black transition hover:bg-zinc-200"
+            className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-medium text-white transition hover:bg-indigo-700"
           >
             {copied ? <CheckCircle2 className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
             {copied ? 'Copied' : 'Copy to clipboard'}
