@@ -275,11 +275,11 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-transparent text-zinc-700 dark:text-zinc-200">
+    <div className="min-h-screen bg-transparent text-zinc-700 dark:text-zinc-200">
       {/* Ambient radial glow + grid background (fixed, non-blocking) */}
-      <div className="fixed inset-0 -z-10 bg-white dark:bg-zinc-950" />
-      <div className="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_50%_50%_at_50%_0%,rgba(99,102,241,0.08),transparent_70%)] dark:bg-[radial-gradient(ellipse_50%_50%_at_50%_0%,rgba(99,102,241,0.18),transparent_70%)]" />
-      <div className="fixed inset-0 -z-10 opacity-60 dark:opacity-100 bg-[linear-gradient(to_right,#d4d4d8_1px,transparent_1px),linear-gradient(to_bottom,#d4d4d8_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px]" />
+      <div className="fixed inset-0 -z-10 bg-zinc-50 dark:bg-zinc-950" />
+      <div className="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_50%_50%_at_50%_0%,rgba(99,102,241,0.07),transparent_70%)] dark:bg-[radial-gradient(ellipse_50%_50%_at_50%_0%,rgba(99,102,241,0.18),transparent_70%)]" />
+      <div className="fixed inset-0 -z-10 opacity-50 dark:opacity-100 bg-[linear-gradient(to_right,#e4e4e7_1px,transparent_1px),linear-gradient(to_bottom,#e4e4e7_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px]" />
 
       <Header
         input={input}
@@ -358,7 +358,7 @@ export default function App() {
                         onExport={onExport}
                         canExport={!!data.repo && !loading}
                       />
-                      <div className="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/80 rounded-2xl overflow-hidden">
+                      <div className="bg-white/80 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/80 rounded-2xl overflow-hidden backdrop-blur-sm">
                         <div className="flex flex-row gap-1 border-b border-zinc-200 dark:border-zinc-800 w-full overflow-x-auto px-4 pt-3 no-scrollbar">
                           {TABS.map((t) => {
                             const active = t.id === activeTab;
@@ -526,7 +526,7 @@ function HeroSection({
         transition={{ delay: 0.28, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         className="mt-8 w-full max-w-xl mx-auto"
       >
-        <div className="group relative">
+        <div className="group relative rounded-2xl shadow-[0_0_0_1px_rgba(99,102,241,0.15),0_8px_30px_-8px_rgba(99,102,241,0.12)] dark:shadow-[0_0_0_1px_rgba(129,140,248,0.18),0_8px_30px_-8px_rgba(129,140,248,0.15)] transition-all duration-300 group-focus-within:shadow-[0_0_0_1.5px_rgba(99,102,241,0.4),0_12px_40px_-8px_rgba(99,102,241,0.25)] dark:group-focus-within:shadow-[0_0_0_1.5px_rgba(129,140,248,0.45),0_12px_40px_-8px_rgba(129,140,248,0.3)]">
           <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 transition-colors group-focus-within:text-indigo-500" />
           <input
             id="global-search-input"
@@ -535,7 +535,7 @@ function HeroSection({
             placeholder="Search public repo (e.g. facebook/react)..."
             ref={searchInputRef}
             autoFocus
-            className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/60 py-4 pl-12 pr-32 text-base text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 outline-none transition focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10"
+            className="w-full rounded-2xl border border-transparent dark:border-transparent bg-white/80 dark:bg-zinc-900/60 py-4 pl-12 pr-32 text-base text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 outline-none transition"
           />
           <button
             type="submit"
@@ -621,7 +621,7 @@ function ProjectStarBadge() {
     >
       <Github className="h-3.5 w-3.5" />
       <span className="h-3.5 w-px bg-zinc-300 dark:bg-zinc-700" />
-      <Star className="h-3 w-3 text-amber-400" />
+      <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
       <span className="font-medium text-zinc-700 dark:text-zinc-300">
         {loading ? '0' : formatNumber(starCount ?? 0)}
       </span>
@@ -861,7 +861,7 @@ function PresetBar({
                 onClick={() => onSelect(b)}
                 className={`group flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
                   active
-                    ? 'border-emerald-600 bg-emerald-600 text-white shadow-sm dark:border-emerald-500/50 dark:bg-emerald-500/10 dark:text-emerald-300'
+                    ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:border-emerald-500/50 dark:bg-emerald-500/10 dark:text-emerald-300'
                     : 'border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-200/70 dark:hover:bg-zinc-800'
                 }`}
               >
