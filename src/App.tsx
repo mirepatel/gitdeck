@@ -358,7 +358,7 @@ export default function App() {
                         onExport={onExport}
                         canExport={!!data.repo && !loading}
                       />
-                      <div className="bg-white/80 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/80 rounded-2xl overflow-hidden backdrop-blur-sm">
+                      <div className="bg-white/80 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/80 rounded-2xl overflow-hidden backdrop-blur-md">
                         <div className="flex flex-row gap-1 border-b border-zinc-200 dark:border-zinc-800 w-full overflow-x-auto px-4 pt-3 no-scrollbar">
                           {TABS.map((t) => {
                             const active = t.id === activeTab;
@@ -918,7 +918,7 @@ function VitalsBanner({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
-      className="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 backdrop-blur-sm"
+      className="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/50 backdrop-blur-md"
     >
       <div className="flex flex-col gap-4 p-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex items-start gap-4 min-w-0 flex-1">
@@ -1041,7 +1041,7 @@ function Card({
   className?: string;
 }) {
   return (
-    <div className={`rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 backdrop-blur-sm p-5 min-w-0 ${className}`}>
+    <div className={`rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/50 backdrop-blur-md p-5 min-w-0 ${className}`}>
       {title && (
         <div className="mb-4 flex items-start gap-2">
           {Icon && <Icon className="h-4 w-4 text-zinc-600 dark:text-zinc-300 mt-0.5 shrink-0" />}
@@ -2249,7 +2249,7 @@ function ContributorsTab({ data }: { data: FetchResult }) {
               initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.04 }}
-              className="group block rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-4 backdrop-blur-sm transition hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-900"
+              className="group block rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/50 p-4 backdrop-blur-md transition hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-white/90 dark:hover:bg-zinc-900"
             >
               <div className="flex items-center gap-3">
                 <img src={c.avatar_url} alt={c.login} className="h-10 w-10 rounded-full border border-zinc-200 dark:border-zinc-800" />
@@ -2956,7 +2956,7 @@ function ErrorState({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
-      className="mt-10 flex flex-col items-center justify-center rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-10 text-center backdrop-blur-sm"
+      className="mt-10 flex flex-col items-center justify-center rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/50 p-10 text-center backdrop-blur-md"
     >
       {is404 ? (
         <Search className="h-10 w-10 text-zinc-400 dark:text-zinc-600" />
@@ -2995,7 +2995,7 @@ function ChartEmptyState({
   message: string;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-12 text-center backdrop-blur-sm">
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/50 p-12 text-center backdrop-blur-md">
       <Icon className="h-8 w-8 text-zinc-400 dark:text-zinc-600" />
       <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">{message}</p>
     </div>
